@@ -1,8 +1,11 @@
+from data_integrity import dataIntegrity
+from pathlib import Path
 import numpy as np
 import random
 import operator
 import pandas as pd
 import matplotlib.pyplot as plt
+import math
 
 
 # the genetic algorithm is based on Mr. Eric Stoltz work, for complete information please visit:
@@ -46,6 +49,21 @@ class Fitness:
     
 
 class Controller:
+    def __init__(self, file_name: str, n: int, multiplier):
+        self.file_name = file_name
+        self.n = n
+        self.multiplier = multiplier
+
+
+    def distanceXy(self, x0, y0, z0, x1, y1, z1):
+        deltaX = x1 - x0
+        deltaY = y1 - y0
+        
+        distance = math.sqrt(deltaX * deltaX + deltaY * deltaY)
+        
+        return distance
+
+
     def createRoute(self, cityList):
         route = random.sample(cityList, len(cityList))
         return route
@@ -182,3 +200,52 @@ class Controller:
         plt.ylabel('Distance')
         plt.xlabel('Generation')
         plt.show()
+
+
+    def createRandomPoints(self):
+        img_path, os_type = dataIntegrity.imgFolder(self)
+        img_path = Path(img_path)
+        img_path = img_path.parent
+
+        if os_type == 'Windows':
+            comb_input_fix = str(img_path) + '\\input\\' + 'comb_' + self.file_name + '.csv'
+        if os_type == 'Linux':
+            comb_input_fix = str(img_path) + '/input/' + 'comb_' + self.file_name + '.csv'
+
+        arr = []
+        for i in range(0,self.n):
+            arr.append("(" + str(int(random.random() * self.multiplier)) + "," + str(int(random.random() * self.multiplier)) + ")")
+        df = pd.DataFrame(arr)
+        df.to_csv(comb_input_fix)
+
+
+    def readPoints(self):
+        
+
+        for i in range(0,self.n):
+            # arr.append(City(x=int(random.random() * self.multiplier), y=int(random.random() * self.multiplier)))
+            arr.append(City(x=int(random.random() * self.multiplier), y=int(random.random() * self.multiplier)))
+
+        return arr
+
+
+    def writeRandomPoints(self):
+        img_path, os_type = dataIntegrity.imgFolder(self)
+        img_path = Path(img_path)
+        img_path = img_path.parent
+
+        if os_type == 'Windows':
+            comb_input_fix = str(img_path) + '\\input\\' + 'comb_' + self.file_name + '.csv'
+            # points_input_fix = str(img_path) + '\\output\\' + 'points_' + self.chain_name + '.csv'
+        if os_type == 'Linux':
+            comb_input_fix = str(img_path) + '/input/' + 'comb_' + self.file_name + '.csv'
+            # points_input_fix = str(img_path) + '/output/' + 'points_' + self.chain_name + '.csv'
+
+        arr = self.createRandomPoints()
+        # print(type(arr[0]))
+        df = pd.DataFrame(arr)
+        # print(df)
+        df.to_csv(comb_input_fix)
+
+
+        

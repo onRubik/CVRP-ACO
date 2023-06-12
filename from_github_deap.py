@@ -1,3 +1,4 @@
+from data_integrity import dataIntegrity
 import numpy as np
 import random
 import operator
