@@ -10,6 +10,7 @@ import math
 
 # the genetic algorithm is based on Mr. Eric Stoltz work, for complete information please visit:
 # https://towardsdatascience.com/evolution-of-a-salesman-a-complete-genetic-algorithm-tutorial-for-python-6fe5d2b3ca35
+# https://github.com/ezstoltz/genetic-algorithm/blob/master/genetic_algorithm_TSP.ipynb
 
 
 class City:
@@ -188,7 +189,6 @@ class Controller:
         return nextGeneration
 
 
-    # def geneticAlgorithm(self, population, popSize, eliteSize, mutationRate, generations):
     def geneticAlgorithm(self):
         img_path, os_type = dataIntegrity.imgFolder(self)
         img_path = Path(img_path)
@@ -232,21 +232,6 @@ class Controller:
 
         print('bestRout = ', bestRoute)
         return bestRoute
-    
-
-    # def geneticAlgorithmPlot(self, population, popSize, eliteSize, mutationRate, generations):
-    #     pop = self.initialPopulation(popSize, population)
-    #     progress = []
-    #     progress.append(1 / self.rankRoutes(pop)[0][1])
-        
-    #     for i in range(0, generations):
-    #         pop = self.nextGeneration(pop, eliteSize, mutationRate)
-    #         progress.append(1 / self.rankRoutes(pop)[0][1])
-        
-    #     plt.plot(progress)
-    #     plt.ylabel('Distance')
-    #     plt.xlabel('Generation')
-    #     plt.show()
 
 
     def createRandomPoints(self):
@@ -261,25 +246,6 @@ class Controller:
 
         arr = []
         for i in range(0,self.n):
-            # arr.append("(" + str(int(random.random() * self.multiplier)) + "," + str(int(random.random() * self.multiplier)) + ")")
             arr.append([int(random.random() * self.multiplier), int(random.random() * self.multiplier)])
         df = pd.DataFrame(arr, columns=['x','y'])
         df.to_csv(comb_input_fix, index=False)
-
-
-    # def readPoints(self):
-    #     img_path, os_type = dataIntegrity.imgFolder(self)
-    #     img_path = Path(img_path)
-    #     img_path = img_path.parent
-
-    #     if os_type == 'Windows':
-    #         comb_input_fix = str(img_path) + '\\input\\' + 'comb_' + self.file_name + '.csv'
-    #     if os_type == 'Linux':
-    #         comb_input_fix = str(img_path) + '/input/' + 'comb_' + self.file_name + '.csv'
-
-    #     arr = []
-
-    #     for i in range(0,self.n):
-    #         arr.append(City(x=int(random.random() * self.multiplier), y=int(random.random() * self.multiplier)))
-
-    #     return arr
