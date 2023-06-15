@@ -230,6 +230,18 @@ class Controller:
             plt.xlabel('Generation')
             plt.show()
 
+            x = []
+            y = []
+            for item in bestRoute:
+                x.append(item.x)
+                y.append(item.y)
+
+            plt.plot(x,y,'o-', label='Cordinates')
+            plt.xlabel('x')
+            plt.ylabel('y')
+            plt.show()
+                
+
         print('bestRout = ', bestRoute)
         return bestRoute
 
