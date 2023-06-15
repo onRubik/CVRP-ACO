@@ -9,7 +9,7 @@ class mainModel:
         popSize = 100
         eliteSize = 20
         mutationRate = 0.01
-        generations = 500
+        generations = 300
         plot = True
 
         newController = Controller(file_name, n, multiplier, popSize, eliteSize, mutationRate, generations, plot)

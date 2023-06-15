@@ -196,8 +196,12 @@ class Controller:
 
         if os_type == 'Windows':
             comb_input_fix = str(img_path) + '\\input\\' + 'comb_' + self.file_name + '.csv'
+            route_output_fix = str(img_path) + '\\output\\' + 'route_' + self.file_name + '.png'
+            csv_output_fix = str(img_path) + '\\output\\' + 'route_' + self.file_name + '.csv'
         if os_type == 'Linux':
             comb_input_fix = str(img_path) + '/input/' + 'comb_' + self.file_name + '.csv'
+            route_output_fix = str(img_path) + '/output/' + 'route_' + self.file_name + '.png'
+            csv_output_fix = str(img_path) + '/output/' + 'route_' + self.file_name + '.csv'
 
         df = pd.read_csv(comb_input_fix)
         
@@ -215,6 +219,18 @@ class Controller:
         print("Final distance: " + str(1 / self.rankRoutes(pop)[0][1]))
         bestRouteIndex = self.rankRoutes(pop)[0][0]
         bestRoute = pop[bestRouteIndex]
+        x = []
+        y = []
+        for item in bestRoute:
+            x.append(item.x)
+            y.append(item.y)
+
+        x.append(bestRoute[0].x)
+        y.append(bestRoute[0].y)
+        df = pd.DataFrame(columns=['x','y'])
+        df['x'] = x
+        df['y'] = y
+        df.to_csv(csv_output_fix, index=False)
 
         if self.plot:
             pop = self.initialPopulation(self.popSize, population)
@@ -230,15 +246,19 @@ class Controller:
             plt.xlabel('Generation')
             plt.show()
 
-            x = []
-            y = []
-            for item in bestRoute:
-                x.append(item.x)
-                y.append(item.y)
+            # x = []
+            # y = []
+            # for item in bestRoute:
+            #     x.append(item.x)
+            #     y.append(item.y)
+
+            # x.append(bestRoute[0].x)
+            # y.append(bestRoute[0].y)
 
             plt.plot(x,y,'o-', label='Cordinates')
             plt.xlabel('x')
             plt.ylabel('y')
+            plt.savefig(route_output_fix)
             plt.show()
                 
 
