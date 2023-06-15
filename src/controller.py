@@ -16,13 +16,15 @@ class City:
     def __init__(self, x, y):
         self.x = x
         self.y = y
-    
+
+
     def distance(self, city):
         xDis = abs(self.x - city.x)
         yDis = abs(self.y - city.y)
         distance = np.sqrt((xDis ** 2) + (yDis ** 2))
         return distance
-    
+
+
     def __repr__(self):
         return "(" + str(self.x) + "," + str(self.y) + ")"
     
@@ -32,6 +34,7 @@ class Fitness:
         self.route = route
         self.distance = 0
         self.fitness= 0.0
+    
     
     def routeDistance(self):
         if self.distance ==0:
@@ -46,13 +49,24 @@ class Fitness:
                 pathDistance += fromCity.distance(toCity)
             self.distance = pathDistance
         return self.distance
+
+    
+    def routeFitness(self):
+        if self.fitness == 0:
+            self.fitness = 1 / float(self.routeDistance())
+        return self.fitness
     
 
 class Controller:
-    def __init__(self, file_name: str, n: int, multiplier):
+    def __init__(self, file_name: str, n: int, multiplier, popSize: int, eliteSize: int, mutationRate: float, generations: int, plot: bool):
         self.file_name = file_name
         self.n = n
         self.multiplier = multiplier
+        self.popSize = popSize
+        self.eliteSize = eliteSize
+        self.mutationRate = mutationRate
+        self.generations = generations
+        self.plot = plot
 
 
     def distanceXy(self, x0, y0, z0, x1, y1, z1):
@@ -174,32 +188,65 @@ class Controller:
         return nextGeneration
 
 
-    def geneticAlgorithm(self, population, popSize, eliteSize, mutationRate, generations):
-        pop = self.initialPopulation(popSize, population)
+    # def geneticAlgorithm(self, population, popSize, eliteSize, mutationRate, generations):
+    def geneticAlgorithm(self):
+        img_path, os_type = dataIntegrity.imgFolder(self)
+        img_path = Path(img_path)
+        img_path = img_path.parent
+
+        if os_type == 'Windows':
+            comb_input_fix = str(img_path) + '\\input\\' + 'comb_' + self.file_name + '.csv'
+        if os_type == 'Linux':
+            comb_input_fix = str(img_path) + '/input/' + 'comb_' + self.file_name + '.csv'
+
+        df = pd.read_csv(comb_input_fix)
+        
+        population = []
+
+        for i, row in df.iterrows():
+            population.append(City(x=row['x'], y=row['y']))
+
+        pop = self.initialPopulation(self.popSize, population)
         print("Initial distance: " + str(1 / self.rankRoutes(pop)[0][1]))
         
-        for i in range(0, generations):
-            pop = self.nextGeneration(pop, eliteSize, mutationRate)
+        for i in range(0, self.generations):
+            pop = self.nextGeneration(pop, self.eliteSize, self.mutationRate)
         
         print("Final distance: " + str(1 / self.rankRoutes(pop)[0][1]))
         bestRouteIndex = self.rankRoutes(pop)[0][0]
         bestRoute = pop[bestRouteIndex]
+
+        if self.plot:
+            pop = self.initialPopulation(self.popSize, population)
+            progress = []
+            progress.append(1 / self.rankRoutes(pop)[0][1])
+
+            for i in range(0, self.generations):
+                pop = self.nextGeneration(pop, self.eliteSize, self.mutationRate)
+                progress.append(1 / self.rankRoutes(pop)[0][1])
+
+            plt.plot(progress)
+            plt.ylabel('Distance')
+            plt.xlabel('Generation')
+            plt.show()
+
+        print('bestRout = ', bestRoute)
         return bestRoute
     
 
-    def geneticAlgorithmPlot(self, population, popSize, eliteSize, mutationRate, generations):
-        pop = self.initialPopulation(popSize, population)
-        progress = []
-        progress.append(1 / self.rankRoutes(pop)[0][1])
+    # def geneticAlgorithmPlot(self, population, popSize, eliteSize, mutationRate, generations):
+    #     pop = self.initialPopulation(popSize, population)
+    #     progress = []
+    #     progress.append(1 / self.rankRoutes(pop)[0][1])
         
-        for i in range(0, generations):
-            pop = self.nextGeneration(pop, eliteSize, mutationRate)
-            progress.append(1 / self.rankRoutes(pop)[0][1])
+    #     for i in range(0, generations):
+    #         pop = self.nextGeneration(pop, eliteSize, mutationRate)
+    #         progress.append(1 / self.rankRoutes(pop)[0][1])
         
-        plt.plot(progress)
-        plt.ylabel('Distance')
-        plt.xlabel('Generation')
-        plt.show()
+    #     plt.plot(progress)
+    #     plt.ylabel('Distance')
+    #     plt.xlabel('Generation')
+    #     plt.show()
 
 
     def createRandomPoints(self):
@@ -214,38 +261,25 @@ class Controller:
 
         arr = []
         for i in range(0,self.n):
-            arr.append("(" + str(int(random.random() * self.multiplier)) + "," + str(int(random.random() * self.multiplier)) + ")")
-        df = pd.DataFrame(arr)
-        df.to_csv(comb_input_fix)
+            # arr.append("(" + str(int(random.random() * self.multiplier)) + "," + str(int(random.random() * self.multiplier)) + ")")
+            arr.append([int(random.random() * self.multiplier), int(random.random() * self.multiplier)])
+        df = pd.DataFrame(arr, columns=['x','y'])
+        df.to_csv(comb_input_fix, index=False)
 
 
-    def readPoints(self):
-        
+    # def readPoints(self):
+    #     img_path, os_type = dataIntegrity.imgFolder(self)
+    #     img_path = Path(img_path)
+    #     img_path = img_path.parent
 
-        for i in range(0,self.n):
-            # arr.append(City(x=int(random.random() * self.multiplier), y=int(random.random() * self.multiplier)))
-            arr.append(City(x=int(random.random() * self.multiplier), y=int(random.random() * self.multiplier)))
+    #     if os_type == 'Windows':
+    #         comb_input_fix = str(img_path) + '\\input\\' + 'comb_' + self.file_name + '.csv'
+    #     if os_type == 'Linux':
+    #         comb_input_fix = str(img_path) + '/input/' + 'comb_' + self.file_name + '.csv'
 
-        return arr
+    #     arr = []
 
+    #     for i in range(0,self.n):
+    #         arr.append(City(x=int(random.random() * self.multiplier), y=int(random.random() * self.multiplier)))
 
-    def writeRandomPoints(self):
-        img_path, os_type = dataIntegrity.imgFolder(self)
-        img_path = Path(img_path)
-        img_path = img_path.parent
-
-        if os_type == 'Windows':
-            comb_input_fix = str(img_path) + '\\input\\' + 'comb_' + self.file_name + '.csv'
-            # points_input_fix = str(img_path) + '\\output\\' + 'points_' + self.chain_name + '.csv'
-        if os_type == 'Linux':
-            comb_input_fix = str(img_path) + '/input/' + 'comb_' + self.file_name + '.csv'
-            # points_input_fix = str(img_path) + '/output/' + 'points_' + self.chain_name + '.csv'
-
-        arr = self.createRandomPoints()
-        # print(type(arr[0]))
-        df = pd.DataFrame(arr)
-        # print(df)
-        df.to_csv(comb_input_fix)
-
-
-        
+    #     return arr

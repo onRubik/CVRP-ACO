@@ -6,8 +6,14 @@ class mainModel:
         file_name = 'ran1'
         n = 25
         multiplier = 200
-        newController = Controller(file_name, n, multiplier)
-        newController.createRandomPoints()
+        popSize = 100
+        eliteSize = 20
+        mutationRate = 0.01
+        generations = 500
+        plot = True
+
+        newController = Controller(file_name, n, multiplier, popSize, eliteSize, mutationRate, generations, plot)
+        newController.geneticAlgorithm()
         pass
 
 
