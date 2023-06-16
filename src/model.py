@@ -11,9 +11,11 @@ class mainModel:
         mutationRate = 0.01
         generations = 300
         plot = True
+        pre_distance_calc = False
 
-        newController = Controller(file_name, n, multiplier, popSize, eliteSize, mutationRate, generations, plot)
+        newController = Controller(file_name, n, multiplier, popSize, eliteSize, mutationRate, generations, plot, pre_distance_calc)
         newController.geneticAlgorithm()
+        # newController.createRandomPointsWithDistance()
         pass
 
 

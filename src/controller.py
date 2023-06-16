@@ -6,6 +6,7 @@ import operator
 import pandas as pd
 import matplotlib.pyplot as plt
 import math
+from itertools import combinations
 
 
 # the genetic algorithm is based on Mr. Eric Stoltz work, for complete information please visit:
@@ -38,7 +39,7 @@ class Fitness:
     
     
     def routeDistance(self):
-        if self.distance ==0:
+        if self.distance == 0:
             pathDistance = 0
             for i in range(0, len(self.route)):
                 fromCity = self.route[i]
@@ -48,18 +49,31 @@ class Fitness:
                 else:
                     toCity = self.route[0]
                 pathDistance += fromCity.distance(toCity)
+            self.distance = pathDistance + math.sqrt(((self.route[0].x - self.route[-1].x)**2 + (self.route[0].y - self.route[-1].y)**2))
+        return self.distance
+    
+
+    def preRouteDistance(self):
+        if self.distance == 0:
+            pathDistance = 0
+            for i in range(0, len(self.route)):
+                pass
             self.distance = pathDistance
         return self.distance
 
     
-    def routeFitness(self):
-        if self.fitness == 0:
-            self.fitness = 1 / float(self.routeDistance())
+    def routeFitness(self, pre_distance_calc):
+        if pre_distance_calc:
+            if self.fitness == 0:
+                self.fitness = 1 / float(self.preRouteDistance())
+        else:
+            if self.fitness == 0:
+                self.fitness = 1 / float(self.routeDistance())
         return self.fitness
     
 
 class Controller:
-    def __init__(self, file_name: str, n: int, multiplier, popSize: int, eliteSize: int, mutationRate: float, generations: int, plot: bool):
+    def __init__(self, file_name: str, n: int, multiplier, popSize: int, eliteSize: int, mutationRate: float, generations: int, plot: bool, pre_distance_calc: bool):
         self.file_name = file_name
         self.n = n
         self.multiplier = multiplier
@@ -68,15 +82,7 @@ class Controller:
         self.mutationRate = mutationRate
         self.generations = generations
         self.plot = plot
-
-
-    def distanceXy(self, x0, y0, z0, x1, y1, z1):
-        deltaX = x1 - x0
-        deltaY = y1 - y0
-        
-        distance = math.sqrt(deltaX * deltaX + deltaY * deltaY)
-        
-        return distance
+        self.pre_distance_calc = pre_distance_calc
 
 
     def createRoute(self, cityList):
@@ -95,7 +101,7 @@ class Controller:
     def rankRoutes(self, population):
         fitnessResults = {}
         for i in range(0,len(population)):
-            fitnessResults[i] = Fitness(population[i]).routeFitness()
+            fitnessResults[i] = Fitness(population[i]).routeFitness(self.pre_distance_calc)
         return sorted(fitnessResults.items(), key = operator.itemgetter(1), reverse = True)
 
 
@@ -272,12 +278,47 @@ class Controller:
         img_path = img_path.parent
 
         if os_type == 'Windows':
-            comb_input_fix = str(img_path) + '\\input\\' + 'comb_' + self.file_name + '.csv'
+            comb_input_fix = str(img_path) + '\\input\\' + 'ran_' + self.file_name + '.csv'
         if os_type == 'Linux':
-            comb_input_fix = str(img_path) + '/input/' + 'comb_' + self.file_name + '.csv'
+            comb_input_fix = str(img_path) + '/input/' + 'ran_' + self.file_name + '.csv'
 
         arr = []
         for i in range(0,self.n):
             arr.append([int(random.random() * self.multiplier), int(random.random() * self.multiplier)])
+
         df = pd.DataFrame(arr, columns=['x','y'])
         df.to_csv(comb_input_fix, index=False)
+
+    
+    def createRandomPointsWithDistance(self):
+        img_path, os_type = dataIntegrity.imgFolder(self)
+        img_path = Path(img_path)
+        img_path = img_path.parent
+
+        if os_type == 'Windows':
+            comb_input_fix = str(img_path) + '\\input\\' + 'ran_dis_' + self.file_name + '.csv'
+        if os_type == 'Linux':
+            comb_input_fix = str(img_path) + '/input/' + 'ran_dis_' + self.file_name + '.csv'
+        
+        arr = []
+        dist_list = []
+
+        for i in range(0,self.n):
+            arr.append([int(random.random() * self.multiplier), int(random.random() * self.multiplier)])
+        
+        comb = list(combinations(arr, 2))
+        print(arr)
+        print('\n')
+        # print(comb)
+        for index, item in enumerate(comb):
+            distance = float(math.sqrt((item[1][0] - item[0][0])**2 + ((item[1][1] - item[0][1])**2)))
+            dist_list.append([item, distance])
+        
+        for x in dist_list:
+            print(x)
+        df = pd.DataFrame(dist_list, columns=['combination','distance'])
+        df.to_csv(comb_input_fix, index=False)
+
+
+    def addDistanceToPoints(self):
+        pass

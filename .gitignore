@@ -2,6 +2,7 @@
 src/draft.py
 src/proposed_ortools.py
 *.png
+*.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
