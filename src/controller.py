@@ -297,15 +297,19 @@ class Controller:
 
         if os_type == 'Windows':
             comb_input_fix = str(img_path) + '\\input\\' + 'ran_dis_' + self.file_name + '.csv'
+            points_input_fix = str(img_path) + '\\input\\' + 'ran_points_' + self.file_name + '.csv'
         if os_type == 'Linux':
             comb_input_fix = str(img_path) + '/input/' + 'ran_dis_' + self.file_name + '.csv'
+            points_input_fix = str(img_path) + '/input/' + 'ran_points_' + self.file_name + '.csv'
         
         arr = []
         dist_list = []
 
         for i in range(0,self.n):
-            arr.append([int(random.random() * self.multiplier), int(random.random() * self.multiplier)])
+            arr.append([round(random.random() * self.multiplier, 6), round(random.random() * self.multiplier, 6)])
         
+        df = pd.DataFrame(arr, columns=['x','y'])
+        df.to_csv(points_input_fix, index=False)
         comb = list(combinations(arr, 2))
         print(arr)
         print('\n')
