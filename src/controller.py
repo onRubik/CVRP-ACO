@@ -6,7 +6,7 @@ import operator
 import pandas as pd
 import matplotlib.pyplot as plt
 import math
-from itertools import combinations
+from itertools import permutations
 
 
 # the genetic algorithm is based on Mr. Eric Stoltz work, for complete information please visit:
@@ -14,67 +14,11 @@ from itertools import combinations
 # https://github.com/ezstoltz/genetic-algorithm/blob/master/genetic_algorithm_TSP.ipynb
 
 
-class City:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-
-
-    def distance(self, city):
-        xDis = abs(self.x - city.x)
-        yDis = abs(self.y - city.y)
-        distance = np.sqrt((xDis ** 2) + (yDis ** 2))
-        return distance
-
-
-    def __repr__(self):
-        return "(" + str(self.x) + "," + str(self.y) + ")"
-    
-
-class Fitness:
-    def __init__(self, route):
-        self.route = route
-        self.distance = 0
-        self.fitness= 0.0
-    
-    
-    def routeDistance(self):
-        if self.distance == 0:
-            pathDistance = 0
-            for i in range(0, len(self.route)):
-                fromCity = self.route[i]
-                toCity = None
-                if i + 1 < len(self.route):
-                    toCity = self.route[i + 1]
-                else:
-                    toCity = self.route[0]
-                pathDistance += fromCity.distance(toCity)
-            self.distance = pathDistance + math.sqrt(((self.route[0].x - self.route[-1].x)**2 + (self.route[0].y - self.route[-1].y)**2))
-        return self.distance
-    
-
-    def preRouteDistance(self):
-        if self.distance == 0:
-            pathDistance = 0
-            for i in range(0, len(self.route)):
-                pass
-            self.distance = pathDistance
-        return self.distance
-
-    
-    def routeFitness(self, pre_distance_calc):
-        if pre_distance_calc:
-            if self.fitness == 0:
-                self.fitness = 1 / float(self.preRouteDistance())
-        else:
-            if self.fitness == 0:
-                self.fitness = 1 / float(self.routeDistance())
-        return self.fitness
-    
-
 class Controller:
-    def __init__(self, file_name: str, n: int, multiplier, popSize: int, eliteSize: int, mutationRate: float, generations: int, plot: bool, pre_distance_calc: bool):
+    def __init__(self, file_name: str, points_name: str,distance_name: str, n: int, multiplier, popSize: int, eliteSize: int, mutationRate: float, generations: int, plot: bool, pre_distance_calc: bool):
         self.file_name = file_name
+        self.points_name = points_name
+        self.distance_name = distance_name
         self.n = n
         self.multiplier = multiplier
         self.popSize = popSize
@@ -83,6 +27,7 @@ class Controller:
         self.generations = generations
         self.plot = plot
         self.pre_distance_calc = pre_distance_calc
+        self.combination_distance = pd.DataFrame()
 
 
     def createRoute(self, cityList):
@@ -201,11 +146,13 @@ class Controller:
         img_path = img_path.parent
 
         if os_type == 'Windows':
-            comb_input_fix = str(img_path) + '\\input\\' + 'comb_' + self.file_name + '.csv'
+            perm_input_fix = str(img_path) + '\\input\\' + self.file_name + '.csv'
+            points_input_fix = str(img_path) + '\\input\\' + self.file_name + '.csv'
             route_output_fix = str(img_path) + '\\output\\' + 'route_' + self.file_name + '.png'
             csv_output_fix = str(img_path) + '\\output\\' + 'route_' + self.file_name + '.csv'
         if os_type == 'Linux':
-            comb_input_fix = str(img_path) + '/input/' + 'comb_' + self.file_name + '.csv'
+            perm_input_fix = str(img_path) + '/input/' + self.file_name + '.csv'
+            points_input_fix = str(img_path) + '/input/' + self.file_name + '.csv'
             route_output_fix = str(img_path) + '/output/' + 'route_' + self.file_name + '.png'
             csv_output_fix = str(img_path) + '/output/' + 'route_' + self.file_name + '.csv'
 
@@ -252,15 +199,6 @@ class Controller:
             plt.xlabel('Generation')
             plt.show()
 
-            # x = []
-            # y = []
-            # for item in bestRoute:
-            #     x.append(item.x)
-            #     y.append(item.y)
-
-            # x.append(bestRoute[0].x)
-            # y.append(bestRoute[0].y)
-
             plt.plot(x,y,'o-', label='Cordinates')
             plt.xlabel('x')
             plt.ylabel('y')
@@ -296,10 +234,10 @@ class Controller:
         img_path = img_path.parent
 
         if os_type == 'Windows':
-            comb_input_fix = str(img_path) + '\\input\\' + 'ran_dis_' + self.file_name + '.csv'
+            perm_input_fix = str(img_path) + '\\input\\' + 'ran_dis_' + self.file_name + '.csv'
             points_input_fix = str(img_path) + '\\input\\' + 'ran_points_' + self.file_name + '.csv'
         if os_type == 'Linux':
-            comb_input_fix = str(img_path) + '/input/' + 'ran_dis_' + self.file_name + '.csv'
+            perm_input_fix = str(img_path) + '/input/' + 'ran_dis_' + self.file_name + '.csv'
             points_input_fix = str(img_path) + '/input/' + 'ran_points_' + self.file_name + '.csv'
         
         arr = []
@@ -310,18 +248,15 @@ class Controller:
         
         df = pd.DataFrame(arr, columns=['x','y'])
         df.to_csv(points_input_fix, index=False)
-        comb = list(combinations(arr, 2))
-        print(arr)
-        print('\n')
-        # print(comb)
-        for index, item in enumerate(comb):
+        # comb = list(combinations(arr, 2))
+        perm = list(permutations(arr, 2))
+        for index, item in enumerate(perm):
             distance = float(math.sqrt((item[1][0] - item[0][0])**2 + ((item[1][1] - item[0][1])**2)))
-            dist_list.append([item, distance])
+            # dist_list.append([item, distance])
+            dist_list.append([item[1][0], item[0][0], item[1][1], item[0][1], distance])
         
-        for x in dist_list:
-            print(x)
-        df = pd.DataFrame(dist_list, columns=['combination','distance'])
-        df.to_csv(comb_input_fix, index=False)
+        df = pd.DataFrame(dist_list, columns=['x2', 'x1', 'y2', 'y1','distance'])
+        df.to_csv(perm_input_fix, index=False)
 
 
     def addDistanceToPoints(self):
