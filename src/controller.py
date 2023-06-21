@@ -1,4 +1,4 @@
-from data_integrity import dataIntegrity
+from data_integrity import DataIntegrity
 from pathlib import Path
 import numpy as np
 import random
@@ -154,7 +154,7 @@ class Controller:
 
 
     def geneticAlgorithm(self):
-        img_path, os_type = dataIntegrity.imgFolder(self)
+        img_path, os_type = DataIntegrity.imgFolder(self)
         img_path = Path(img_path)
         img_path = img_path.parent
 
@@ -218,7 +218,7 @@ class Controller:
 
 
     def createRandomPoints(self):
-        img_path, os_type = dataIntegrity.imgFolder(self)
+        img_path, os_type = DataIntegrity.imgFolder(self)
         img_path = Path(img_path)
         img_path = img_path.parent
 
@@ -236,7 +236,7 @@ class Controller:
 
     
     def createRandomPointsWithDistance(self):
-        img_path, os_type = dataIntegrity.imgFolder(self)
+        img_path, os_type = DataIntegrity.imgFolder(self)
         img_path = Path(img_path)
         img_path = img_path.parent
 

@@ -2,7 +2,7 @@ import platform
 import os
 
 
-class dataIntegrity:
+class DataIntegrity:
     def imgFolder(self):
         os_type = platform.system()
         if os_type == 'Windows':
