@@ -1,9 +1,5 @@
 # draft
 src/draft.py
-# src/copilot_draft.py
-# src/copilot_model.py
-src/copilot_notes.md
-src/proposed_ortools.py
 *.png
 *.csv
 
