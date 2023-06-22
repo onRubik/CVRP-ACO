@@ -1,4 +1,4 @@
-from model import Model
+# from data_integrity import DataIntegrity
 from pathlib import Path
 import numpy as np
 import random
@@ -11,16 +11,19 @@ import csv
 from tqdm import trange
 
 
-class Controller:
-    def __init__(self, popSize: int, eliteSize: int, mutationRate: float, generations: int, plot: bool, sql: bool, con):
+class ControllerCopy:
+    def __init__(self, file_name: str, points_name: str,distance_name: str, n: int, multiplier, popSize: int, eliteSize: int, mutationRate: float, generations: int, plot: bool):
+        self.file_name = file_name
+        self.points_name = points_name
+        self.distance_name = distance_name
+        self.n = n
+        self.multiplier = multiplier
         self.popSize = popSize
         self.eliteSize = eliteSize
         self.mutationRate = mutationRate
         self.generations = generations
         self.plot = plot
         self.combination_distance = pd.DataFrame()
-        self.sql = sql
-        self.con = con
 
 
     def createRoute(self, cityList):
@@ -36,7 +39,7 @@ class Controller:
         return population
     
 
-    def dfFitnessFunction(self, route):
+    def fitnessFunction(self, route):
         distance = 0
         for i in range(len(route)-1):
             segment_distance = self.combination_distance.where((self.combination_distance['x1']==route[i][0]) & (self.combination_distance['y1']==route[i][1]) & (self.combination_distance['x2']==route[i+1][0]) & (self.combination_distance['y2']==route[i+1][1]))
@@ -50,19 +53,12 @@ class Controller:
         distance += segment_distance
 
         return distance
-    
-
-    def sqlFitnessFunction(self, route):
-        perm = str()
 
 
     def rankRoutes(self, population):
         fitnessResults = {}
         for i in range(0,len(population)):
-            if not self.sql:
-                fitnessResults[i] = 1 / float(self.dfFitnessFunction(population[i]))
-            if self.sql:
-                fitnessResults[i] = 1 / float(self.sqlFitnessFunction(population[i]))
+            fitnessResults[i] = 1 / float(self.fitnessFunction(population[i]))
 
         return sorted(fitnessResults.items(), key = operator.itemgetter(1), reverse = True)
 
@@ -157,9 +153,34 @@ class Controller:
         return nextGeneration
 
 
-    def geneticAlgorithm(self, points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix):
+    def geneticAlgorithm(self):
+        img_path, os_type = DataIntegrity.imgFolder(self)
+        img_path = Path(img_path)
+        img_path = img_path.parent
+
+        if os_type == 'Windows':
+            perm_input_fix = str(img_path) + '\\input\\' + self.distance_name + '.csv'
+            points_input_fix = str(img_path) + '\\input\\' + self.points_name + '.csv'
+            route_output_fix = str(img_path) + '\\output\\' + 'route_' + self.file_name + '.png'
+            progress_output_fix = str(img_path) + '\\output\\' + 'progress_' + self.file_name + '.png'
+            csv_output_fix = str(img_path) + '\\output\\' + 'route_' + self.file_name + '.csv'
+        if os_type == 'Linux':
+            perm_input_fix = str(img_path) + '/input/' + self.distance_name + '.csv'
+            points_input_fix = str(img_path) + '/input/' + self.points_name + '.csv'
+            route_output_fix = str(img_path) + '/output/' + 'route_' + self.file_name + '.png'
+            progress_output_fix = str(img_path) + '/output/' + 'progress_' + self.file_name + '.png'
+            csv_output_fix = str(img_path) + '/output/' + 'route_' + self.file_name + '.csv'
+
         progress = []
-        self.combination_distance = combination_distance
+
+        with open(points_input_fix, 'r') as f:
+            reader = csv.reader(f)
+            points = list(reader)
+
+        points = [[round(float(j), 6) for j in i] for i in points[1:]]
+
+        self.combination_distance = pd.read_csv(perm_input_fix)
+
         pop = self.initialPopulation(self.popSize, points)
         initial_distance = 1 / self.rankRoutes(pop)[0][1]
         print("Initial distance: " + str(initial_distance))
@@ -194,3 +215,54 @@ class Controller:
                 
         print('bestRoute = ', bestRoute)
         return bestRoute
+
+
+    def createRandomPoints(self):
+        img_path, os_type = DataIntegrity.imgFolder(self)
+        img_path = Path(img_path)
+        img_path = img_path.parent
+
+        if os_type == 'Windows':
+            comb_input_fix = str(img_path) + '\\input\\' + 'ran_' + self.file_name + '.csv'
+        if os_type == 'Linux':
+            comb_input_fix = str(img_path) + '/input/' + 'ran_' + self.file_name + '.csv'
+
+        arr = []
+        for i in range(0,self.n):
+            arr.append([int(random.random() * self.multiplier), int(random.random() * self.multiplier)])
+
+        df = pd.DataFrame(arr, columns=['x','y'])
+        df.to_csv(comb_input_fix, index=False)
+
+    
+    def createRandomPointsWithDistance(self):
+        img_path, os_type = DataIntegrity.imgFolder(self)
+        img_path = Path(img_path)
+        img_path = img_path.parent
+
+        if os_type == 'Windows':
+            perm_input_fix = str(img_path) + '\\input\\' + 'ran_dis_' + self.file_name + '.csv'
+            points_input_fix = str(img_path) + '\\input\\' + 'ran_points_' + self.file_name + '.csv'
+        if os_type == 'Linux':
+            perm_input_fix = str(img_path) + '/input/' + 'ran_dis_' + self.file_name + '.csv'
+            points_input_fix = str(img_path) + '/input/' + 'ran_points_' + self.file_name + '.csv'
+        
+        arr = []
+        dist_list = []
+
+        for i in range(0,self.n):
+            arr.append([round(random.random() * self.multiplier, 6), round(random.random() * self.multiplier, 6)])
+        
+        df = pd.DataFrame(arr, columns=['x','y'])
+        df.to_csv(points_input_fix, index=False)
+        perm = list(permutations(arr, 2))
+        for index, item in enumerate(perm):
+            distance = float(math.sqrt((item[1][0] - item[0][0])**2 + ((item[1][1] - item[0][1])**2)))
+            dist_list.append([item[1][0], item[0][0], item[1][1], item[0][1], distance])
+        
+        df = pd.DataFrame(dist_list, columns=['x2', 'x1', 'y2', 'y1','distance'])
+        df.to_csv(perm_input_fix, index=False)
+
+
+    def addDistanceToPoints(self):
+        pass
