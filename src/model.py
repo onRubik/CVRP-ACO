@@ -120,11 +120,15 @@ class Model:
             progress_output_fix = str(self.img_path) + '/output/' + 'progress_' + self.file_name + '.png'
             csv_output_fix = str(self.img_path) + '/output/' + 'route_' + self.file_name + '.csv'
         
-        with open(points_input_fix, 'r') as f:
-            reader = csv.reader(f)
-            points = list(reader)
+        if self.sql:
+            points = pd.read_csv(points_input_fix)
+        if self.sql == False:
+            with open(points_input_fix, 'r') as f:
+                reader = csv.reader(f)
+                points = list(reader)
 
-        points = [[round(float(j), 6) for j in i] for i in points[1:]]
+            points = [[round(float(j), 6) for j in i] for i in points[1:]]
+
         combination_distance = pd.read_csv(perm_input_fix)
 
         return points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix
@@ -144,3 +148,68 @@ class Model:
 
     def closeDb(self):
         self.con.close()
+
+    
+    def sqlUpdate(self, points, combination_distance):
+        cur = self.con.cursor()
+
+        for row in cur.execute('''
+            select
+            case
+                when exists (select 1 from stage_points)
+                then 1
+                else 0
+            end
+        '''):
+            print(int(row[0]))
+
+        if int(row[0]) == 1:
+            cur.execute('delete from stage_points')
+            self.con.commit()
+
+        points = points.set_index('point')
+        points.to_sql('stage_points', self.con, if_exists='append', index_label='point')
+        self.con.commit()
+
+        cur.execute('''
+            insert into points(point, x, y)
+            select *
+            from stage_points
+            where point not in (
+                select point
+                from points
+            )
+        ''')
+        self.con.commit()
+
+        for row in cur.execute('''
+            select
+            case
+                when exists (select 1 from stage_permutation_distance)
+                then 1
+                else 0
+            end
+        '''):
+            print(int(row[0]))
+
+        if int(row[0]) == 1:
+            cur.execute('delete from stage_permutation_distance')
+            self.con.commit()
+
+        combination_distance = combination_distance.set_index('perm')
+        combination_distance.to_sql('stage_permutation_distance', self.con, if_exists='append', 
+        index_label='perm')
+        self.con.commit()
+
+        cur.execute('''
+            insert into permutation_distance(perm, x2, x1, y2, y1, distance)
+            select *
+            from stage_permutation_distance
+            where perm not in (
+                select perm
+                from permutation_distance
+            )
+        ''')
+        self.con.commit()
+
+        

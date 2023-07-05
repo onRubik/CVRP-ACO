@@ -12,7 +12,7 @@ from tqdm import trange
 
 
 class Controller:
-    def __init__(self, popSize: int, eliteSize: int, mutationRate: float, generations: int, plot: bool, sql: bool, con):
+    def __init__(self, popSize: int, eliteSize: int, mutationRate: float, generations: int, plot: bool, sql: bool, con, db_path):
         self.popSize = popSize
         self.eliteSize = eliteSize
         self.mutationRate = mutationRate
@@ -21,6 +21,7 @@ class Controller:
         self.combination_distance = pd.DataFrame()
         self.sql = sql
         self.con = con
+        self.db_path = db_path
 
 
     def createRoute(self, cityList):
