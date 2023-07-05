@@ -12,7 +12,7 @@ class Main:
         popSize = 100
         eliteSize = 20
         mutationRate = 0.01
-        generations = 10
+        generations = 500
         plot = True
         sql = True
         con = None
@@ -20,15 +20,14 @@ class Main:
 
         newModel = Model(file_name, points_name, distance_name, n, multiplier, db_name, sql)
         newModel.imgFolder()
-        newModel.initDb()
+        con = newModel.initDb()
         points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix = newModel.dfInput()
-        newModel.sqlUpdate(points, combination_distance)
-        newModel.closeDb()
-
-        # newController = Controller(popSize, eliteSize, mutationRate, generations, plot, sql, con)
+        # newModel.closeDb()
+        newController = Controller(popSize, eliteSize, mutationRate, generations, plot, sql, con)
         # newModel.imgFolder()
         # points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix = newModel.dfInput()
-        # newController.geneticAlgorithm(points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix)
+        newController.geneticAlgorithm(points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix)
+        newModel.closeDb()
 
 
 if __name__ == '__main__':

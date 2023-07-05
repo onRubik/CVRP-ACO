@@ -1,18 +1,13 @@
-from model import Model
-from pathlib import Path
 import numpy as np
 import random
 import operator
 import pandas as pd
 import matplotlib.pyplot as plt
-import math
-from itertools import permutations
-import csv
 from tqdm import trange
 
 
 class Controller:
-    def __init__(self, popSize: int, eliteSize: int, mutationRate: float, generations: int, plot: bool, sql: bool, con, db_path):
+    def __init__(self, popSize: int, eliteSize: int, mutationRate: float, generations: int, plot: bool, sql: bool, con):
         self.popSize = popSize
         self.eliteSize = eliteSize
         self.mutationRate = mutationRate
@@ -21,7 +16,7 @@ class Controller:
         self.combination_distance = pd.DataFrame()
         self.sql = sql
         self.con = con
-        self.db_path = db_path
+        self.cur = None
 
 
     def createRoute(self, cityList):
@@ -54,7 +49,22 @@ class Controller:
     
 
     def sqlFitnessFunction(self, route):
-        perm = str()
+        # perm = str()
+        distance = 0
+        for i in range(len(route)-1):
+            query_str = 'select distance from permutation_distance where x1 = '+str(route[i][0])+' and y1 = '+str(route[i][1])+' and x2 = '+str(route[i+1][0])+' and y2 = '+str(route[i+1][1])
+            # query_str = "'''" + query_str + "'''"
+            for row in self.cur.execute(query_str):
+                segment_distance = row[0]
+            distance += segment_distance
+
+        query_str = 'select distance from permutation_distance where x1 = '+str(route[-1][0])+' and y1 = '+str(route[-1][1])+' and x2 = '+str(route[0][0])+' and y2 = '+str(route[0][1])
+        # query_str = "'''" + query_str + "'''"
+        for row in self.cur.execute(query_str):
+            segment_distance = row[0]
+        distance += segment_distance
+
+        return distance
 
 
     def rankRoutes(self, population):
@@ -159,6 +169,17 @@ class Controller:
 
 
     def geneticAlgorithm(self, points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix):
+        if self.sql:
+            self.cur = self.con.cursor()
+            selected_columns = ['x', 'y']
+            points = points[selected_columns].values
+            selected_df = pd.DataFrame(points, columns=selected_columns)
+            array_string = selected_df.to_string(index=False, header=False)
+            points = [line.split() for line in array_string.split('\n') if line]
+            for item in points:
+                item[0] = round(float(item[0]), 6)
+                item[1] = round(float(item[1]), 6)
+
         progress = []
         self.combination_distance = combination_distance
         pop = self.initialPopulation(self.popSize, points)
