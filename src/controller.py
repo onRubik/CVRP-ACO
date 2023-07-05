@@ -49,17 +49,14 @@ class Controller:
     
 
     def sqlFitnessFunction(self, route):
-        # perm = str()
         distance = 0
         for i in range(len(route)-1):
             query_str = 'select distance from permutation_distance where x1 = '+str(route[i][0])+' and y1 = '+str(route[i][1])+' and x2 = '+str(route[i+1][0])+' and y2 = '+str(route[i+1][1])
-            # query_str = "'''" + query_str + "'''"
             for row in self.cur.execute(query_str):
                 segment_distance = row[0]
             distance += segment_distance
 
         query_str = 'select distance from permutation_distance where x1 = '+str(route[-1][0])+' and y1 = '+str(route[-1][1])+' and x2 = '+str(route[0][0])+' and y2 = '+str(route[0][1])
-        # query_str = "'''" + query_str + "'''"
         for row in self.cur.execute(query_str):
             segment_distance = row[0]
         distance += segment_distance

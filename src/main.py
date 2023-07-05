@@ -22,10 +22,7 @@ class Main:
         newModel.imgFolder()
         con = newModel.initDb()
         points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix = newModel.dfInput()
-        # newModel.closeDb()
         newController = Controller(popSize, eliteSize, mutationRate, generations, plot, sql, con)
-        # newModel.imgFolder()
-        # points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix = newModel.dfInput()
         newController.geneticAlgorithm(points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix)
         newModel.closeDb()
 
