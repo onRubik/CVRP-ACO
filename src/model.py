@@ -15,7 +15,7 @@ import sqlite3
 
 
 class Model:
-    def __init__(self, file_name: str, points_name: str, distance_name: str, n: int, multiplier: int, db_name):
+    def __init__(self, file_name: str, points_name: str, distance_name: str, n: int, multiplier: int, db_name, sql: bool):
         self.file_name = file_name
         self.points_name = points_name
         self.distance_name = distance_name
@@ -25,6 +25,7 @@ class Model:
         self.os_type = None
         self.db_name = db_name
         self.con = None
+        self.sql = sql
 
 
     def imgFolder(self):
@@ -48,7 +49,14 @@ class Model:
 
         arr = []
         for i in range(0,self.n):
-            arr.append([int(random.random() * self.multiplier), int(random.random() * self.multiplier)])
+            x = int(random.random() * self.multiplier)
+            y = int(random.random() * self.multiplier)
+            
+            if self.sql:
+                point = '(' + str(x) + ',' + str(y) + ')'
+                arr.append([point, x, y])
+            if self.sql == False:
+                arr.append([x, y])
 
         df = pd.DataFrame(arr, columns=['x','y'])
 
@@ -76,6 +84,15 @@ class Model:
             dist_list.append([item[1][0], item[0][0], item[1][1], item[0][1], distance])
         
         df_perm = pd.DataFrame(dist_list, columns=['x2', 'x1', 'y2', 'y1','distance'])
+
+        if self.sql:
+            df_points['point'] = '(' + df_points['x'].astype(str) + ',' + df_points['y'].astype(str) + ')'
+            column_order = ['point'] + list(df_points.columns[:-1])
+            df_points = df_points[column_order]
+
+            df_perm['perm'] = '(' + df_perm['x2'].astype(str)+','+df_perm['x1'].astype(str)+','+df_perm['y2'].astype(str)+','+df_perm['y1'].astype(str) + ')'
+            column_order = ['perm'] + list(df_perm.columns[:-1])
+            df_perm = df_perm[column_order]
 
         return [[df_points, points_input_fix], [df_perm, perm_input_fix]]
 
