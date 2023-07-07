@@ -1,4 +1,4 @@
-# p5XYgraphing
+# chartXYgraphing
 2d xy graphing using Chartjs
 
 
