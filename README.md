@@ -29,7 +29,7 @@ The index.html file can be opened without a server, it will ask for the “best 
 
 
 # Python
-Python version in use = 3.9.16
+Python version in use = 3.11.4
 
 To list current requirement:
 > pip freeze requirement.txt
