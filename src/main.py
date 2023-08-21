@@ -4,9 +4,9 @@ from model import Model
 
 class Main:
     def run(self):
-        file_name = 'ran2'
-        points_name = 'ran_points_ran2'
-        distance_name = 'ran_dis_ran2'
+        file_name = 'ran'
+        points_name = 'ran_points_ran'
+        distance_name = 'ran_dis_ran'
         n = 25
         multiplier = 200
         popSize = 100

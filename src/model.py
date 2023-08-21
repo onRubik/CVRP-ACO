@@ -207,4 +207,13 @@ class Model:
         ''')
         self.con.commit()
 
+
+    def addPallLbtoDf(self, items):
+        sub_arr = False
+        for x in items:
+            if type(x) == list:
+                sub_arr = True
+                break
+        pass
+
         
