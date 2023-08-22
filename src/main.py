@@ -15,16 +15,23 @@ class Main:
         generations = 500
         plot = True
         sql = True
+        # sql = False
         con = None
         db_name = 'points.db'
 
         newModel = Model(file_name, points_name, distance_name, n, multiplier, db_name, sql)
         newModel.imgFolder()
-        con = newModel.initDb()
-        points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix = newModel.dfInput()
-        newController = Controller(popSize, eliteSize, mutationRate, generations, plot, sql, con)
-        newController.geneticAlgorithm(points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix)
-        newModel.closeDb()
+        # con = newModel.initDb()
+        # points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix = newModel.dfInput()
+        # newController = Controller(popSize, eliteSize, mutationRate, generations, plot, sql, con)
+        # newController.geneticAlgorithm(points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix)
+        # newModel.closeDb()
+        
+        items = newModel.createRandomPoints()
+        # points_perm = newModel.createRandomPointsWithDistance()
+        newModel.addPallLbtoDf(items)
+        # newModel.addPallLbtoDf(points_perm)
+
 
 
 if __name__ == '__main__':

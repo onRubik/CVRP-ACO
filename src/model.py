@@ -44,16 +44,14 @@ class Model:
 
         arr = []
         for i in range(0,self.n):
-            x = int(random.random() * self.multiplier)
-            y = int(random.random() * self.multiplier)
+            arr.append([round(random.random() * self.multiplier, 6), round(random.random() * self.multiplier, 6)])
             
-            if self.sql:
-                point = '(' + str(x) + ',' + str(y) + ')'
-                arr.append([point, x, y])
-            if self.sql == False:
-                arr.append([x, y])
-
         df = pd.DataFrame(arr, columns=['x','y'])
+
+        if self.sql:
+            df['point'] = '(' + df['x'].astype(str) + ',' + df['y'].astype(str) + ')'
+            column_order = ['point'] + list(df.columns[:-1])
+            df = df[column_order]
 
         return [df, comb_input_fix]
 
@@ -209,11 +207,17 @@ class Model:
 
 
     def addPallLbtoDf(self, items):
+        
         sub_arr = False
-        for x in items:
-            if type(x) == list:
-                sub_arr = True
-                break
+        if type(items[0]) == list: sub_arr = True
+        
+        if sub_arr == True:
+            df = items[0][0]
+        elif sub_arr == False:
+            df = items[0]
+
+        print(type(df))
+        print(df)
         pass
 
         
