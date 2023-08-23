@@ -207,8 +207,10 @@ class Model:
 
 
     def addPallLbtoDf(self, items):
-        
+        pall = []
+        lbs = []
         sub_arr = False
+        
         if type(items[0]) == list: sub_arr = True
         
         if sub_arr == True:
@@ -216,7 +218,15 @@ class Model:
         elif sub_arr == False:
             df = items[0]
 
-        print(type(df))
+        for i in range(0,self.n):
+            count = random.randint(1, 15)
+            pall.append(count)
+            weight = count * round(random.uniform(1200, 1700), 6)
+            lbs.append(weight)
+
+        df['pallets'] = pall
+        df['weight'] = lbs
+
         print(df)
         pass
 
