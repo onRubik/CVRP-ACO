@@ -215,11 +215,17 @@ class Model:
         
         if sub_arr == True:
             df = items[0][0]
+            points_input_fix = items[0][1]
         elif sub_arr == False:
             df = items[0]
+            points_input_fix = items[1]
 
         for i in range(0,self.n):
-            count = random.randint(1, 15)
+            # number of pallets are tought as if it were to be more than 8 for a big or hub store
+            if random.random() <= 0.2:
+                count = random.randint(9, 15)
+            else:
+                count = random.randint(1, 8)
             pall.append(count)
             weight = count * round(random.uniform(1200, 1700), 6)
             lbs.append(weight)
@@ -227,7 +233,6 @@ class Model:
         df['pallets'] = pall
         df['weight'] = lbs
 
-        print(df)
-        pass
+        return [df, points_input_fix]
 
         

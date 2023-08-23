@@ -29,8 +29,11 @@ class Main:
         
         items = newModel.createRandomPoints()
         # points_perm = newModel.createRandomPointsWithDistance()
-        newModel.addPallLbtoDf(items)
+        points_lbs_pall = newModel.addPallLbtoDf(items)
         # newModel.addPallLbtoDf(points_perm)
+
+        print(points_lbs_pall[0])
+        print(points_lbs_pall[1])
 
 
 
