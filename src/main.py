@@ -22,18 +22,21 @@ class Main:
         newModel = Model(file_name, points_name, distance_name, n, multiplier, db_name, sql)
         newModel.imgFolder()
         # con = newModel.initDb()
-        # points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix = newModel.dfInput()
+        points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix = newModel.dfInput()
         # newController = Controller(popSize, eliteSize, mutationRate, generations, plot, sql, con)
         # newController.geneticAlgorithm(points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix)
         # newModel.closeDb()
         
-        items = newModel.createRandomPoints()
+        # items = newModel.createRandomPoints()
         # points_perm = newModel.createRandomPointsWithDistance()
-        points_lbs_pall = newModel.addPallLbtoDf(items)
-        # newModel.addPallLbtoDf(points_perm)
+        # points_lbs_pall = newModel.addPallLbtoDf(items)
+        # add_lbs = newModel.addPallLbtoDf(points_perm)
+        # newModel.saveToCsv(add_lbs)
 
-        print(points_lbs_pall[0])
-        print(points_lbs_pall[1])
+        newModel.initDb()
+        newModel.sqlUpdate(points, combination_distance)
+        newModel.closeDb()
+
 
 
 

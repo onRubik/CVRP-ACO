@@ -165,7 +165,7 @@ class Model:
         self.con.commit()
 
         cur.execute('''
-            insert into points(point, x, y)
+            insert into points(point, x, y, pallets, weight)
             select *
             from stage_points
             where point not in (
@@ -215,10 +215,8 @@ class Model:
         
         if sub_arr == True:
             df = items[0][0]
-            points_input_fix = items[0][1]
         elif sub_arr == False:
             df = items[0]
-            points_input_fix = items[1]
 
         for i in range(0,self.n):
             # number of pallets are tought as if it were to be more than 8 for a big or hub store
@@ -233,6 +231,9 @@ class Model:
         df['pallets'] = pall
         df['weight'] = lbs
 
-        return [df, points_input_fix]
-
-        
+        if sub_arr:
+            items[0][0] = df
+            return items
+        elif sub_arr == False:
+            items[0] = df
+            return items
