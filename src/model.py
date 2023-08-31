@@ -115,14 +115,18 @@ class Model:
         
         if self.sql:
             points = pd.read_csv(points_input_fix)
-        if self.sql == False:
+        elif self.sql == False:
             with open(points_input_fix, 'r') as f:
                 reader = csv.reader(f)
                 points = list(reader)
 
             points = [[round(float(j), 6) for j in i] for i in points[1:]]
 
-        combination_distance = pd.read_csv(perm_input_fix)
+        if self.sql:
+            combination_distance = None
+        elif self.sql == False:
+            combination_distance = pd.read_csv(perm_input_fix)
+            
 
         return points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix
     

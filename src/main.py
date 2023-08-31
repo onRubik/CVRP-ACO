@@ -10,8 +10,8 @@ class Main:
         n = 25
         multiplier = 200
         popSize = 100
-        eliteSize = 20
-        mutationRate = 0.01
+        elite_size = 20
+        mutation_rate = 0.01
         generations = 500
         plot = True
         sql = True
@@ -21,11 +21,11 @@ class Main:
 
         newModel = Model(file_name, points_name, distance_name, n, multiplier, db_name, sql)
         newModel.imgFolder()
-        # con = newModel.initDb()
+        con = newModel.initDb()
         points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix = newModel.dfInput()
-        # newController = Controller(popSize, eliteSize, mutationRate, generations, plot, sql, con)
-        # newController.geneticAlgorithm(points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix)
-        # newModel.closeDb()
+        newController = Controller(popSize, elite_size, mutation_rate, generations, plot, sql, con)
+        newController.geneticAlgorithm(points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix)
+        newModel.closeDb()
         
         # items = newModel.createRandomPoints()
         # points_perm = newModel.createRandomPointsWithDistance()
@@ -33,9 +33,9 @@ class Main:
         # add_lbs = newModel.addPallLbtoDf(points_perm)
         # newModel.saveToCsv(add_lbs)
 
-        newModel.initDb()
-        newModel.sqlUpdate(points, combination_distance)
-        newModel.closeDb()
+        # newModel.initDb()
+        # newModel.sqlUpdate(points, combination_distance)
+        # newModel.closeDb()
 
 
 

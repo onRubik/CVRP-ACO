@@ -7,16 +7,23 @@ from tqdm import trange
 
 
 class Controller:
-    def __init__(self, popSize: int, eliteSize: int, mutationRate: float, generations: int, plot: bool, sql: bool, con):
+    def __init__(self, popSize: int, elite_size: int, mutation_rate: float, generations: int, plot: bool, sql: bool, con, ants_n, ants_iterations, ants_alpha, ants_beta, ants_evaporation_rate, ants_Q):
         self.popSize = popSize
-        self.eliteSize = eliteSize
-        self.mutationRate = mutationRate
+        self.elite_size = elite_size
+        self.mutation_rate = mutation_rate
         self.generations = generations
         self.plot = plot
-        self.combination_distance = pd.DataFrame()
+        # self.combination_distance = pd.DataFrame()
+        self.combination_distance = None
         self.sql = sql
         self.con = con
         self.cur = None
+        self.ants_n = ants_n
+        self.ants_iterations = ants_iterations
+        self.ants_alpha = ants_alpha
+        self.ants_beta = ants_beta
+        self.ants_evaporation_rate = ants_evaporation_rate
+        self.ants_Q = ants_Q
 
 
     def createRoute(self, cityList):
@@ -75,15 +82,15 @@ class Controller:
         return sorted(fitnessResults.items(), key = operator.itemgetter(1), reverse = True)
 
 
-    def selection(self, popRanked, eliteSize):
+    def selection(self, popRanked, elite_size):
         selectionResults = []
         df = pd.DataFrame(np.array(popRanked), columns=["Index","Fitness"])
         df['cum_sum'] = df.Fitness.cumsum()
         df['cum_perc'] = 100*df.cum_sum/df.Fitness.sum()
         
-        for i in range(0, eliteSize):
+        for i in range(0, elite_size):
             selectionResults.append(popRanked[i][0])
-        for i in range(0, len(popRanked) - eliteSize):
+        for i in range(0, len(popRanked) - elite_size):
             pick = 100*random.random()
             for i in range(0, len(popRanked)):
                 if pick <= df.iat[i,3]:
@@ -120,12 +127,12 @@ class Controller:
         return child
 
 
-    def breedPopulation(self, matingpool, eliteSize):
+    def breedPopulation(self, matingpool, elite_size):
         children = []
-        length = len(matingpool) - eliteSize
+        length = len(matingpool) - elite_size
         pool = random.sample(matingpool, len(matingpool))
 
-        for i in range(0,eliteSize):
+        for i in range(0,elite_size):
             children.append(matingpool[i])
         
         for i in range(0, length):
@@ -134,9 +141,9 @@ class Controller:
         return children
 
 
-    def mutate(self, individual, mutationRate):
+    def mutate(self, individual, mutation_rate):
         for swapped in range(len(individual)):
-            if(random.random() < mutationRate):
+            if(random.random() < mutation_rate):
                 swapWith = int(random.random() * len(individual))
                 
                 city1 = individual[swapped]
@@ -147,21 +154,21 @@ class Controller:
         return individual
 
 
-    def mutatePopulation(self, population, mutationRate):
+    def mutatePopulation(self, population, mutation_rate):
         mutatedPop = []
         
         for ind in range(0, len(population)):
-            mutatedInd = self.mutate(population[ind], mutationRate)
+            mutatedInd = self.mutate(population[ind], mutation_rate)
             mutatedPop.append(mutatedInd)
         return mutatedPop
 
 
-    def nextGeneration(self, currentGen, eliteSize, mutationRate):
+    def nextGeneration(self, currentGen, elite_size, mutation_rate):
         popRanked = self.rankRoutes(currentGen)
-        selectionResults = self.selection(popRanked, eliteSize)
+        selectionResults = self.selection(popRanked, elite_size)
         matingpool = self.matingPool(currentGen, selectionResults)
-        children = self.breedPopulation(matingpool, eliteSize)
-        nextGeneration = self.mutatePopulation(children, mutationRate)
+        children = self.breedPopulation(matingpool, elite_size)
+        nextGeneration = self.mutatePopulation(children, mutation_rate)
         return nextGeneration
 
 
@@ -178,21 +185,22 @@ class Controller:
                 item[1] = round(float(item[1]), 6)
 
         progress = []
-        self.combination_distance = combination_distance
+        if self.sql == False:
+            self.combination_distance = combination_distance
         pop = self.initialPopulation(self.popSize, points)
         initial_distance = 1 / self.rankRoutes(pop)[0][1]
         print("Initial distance: " + str(initial_distance))
         
         for i in trange(0, self.generations):
-            pop = self.nextGeneration(pop, self.eliteSize, self.mutationRate)
+            pop = self.nextGeneration(pop, self.elite_size, self.mutation_rate)
             progress.append(1 / self.rankRoutes(pop)[0][1])
         
         print("Final distance: " + str(1 / self.rankRoutes(pop)[0][1]))
-        bestRouteIndex = self.rankRoutes(pop)[0][0]
-        bestRoute = pop[bestRouteIndex]
-        bestRoute = bestRoute + [bestRoute[0]]
-        x = [item[0] for item in bestRoute]
-        y = [item[1] for item in bestRoute]
+        best_route_index = self.rankRoutes(pop)[0][0]
+        best_route = pop[best_route_index]
+        best_route = best_route + [best_route[0]]
+        x = [item[0] for item in best_route]
+        y = [item[1] for item in best_route]
         df = pd.DataFrame(columns=['x','y'])
         df['x'] = x
         df['y'] = y
@@ -211,5 +219,48 @@ class Controller:
             plt.savefig(route_output_fix)
             plt.show()
                 
-        print('bestRoute = ', bestRoute)
-        return bestRoute
+        print('best_route = ', best_route)
+        return best_route
+    
+
+    def antColonyAlgorithm(self, points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix):
+        points_len = len(points)
+        pheromone = np.ones((points_len, points_len))
+        best_route = None
+        best_route_distance = np.inf
+
+        if self.sql:
+            self.cur = self.con.cursor()
+            selected_columns = ['x', 'y']
+            points = points[selected_columns].values
+            selected_df = pd.DataFrame(points, columns=selected_columns)
+            array_string = selected_df.to_string(index=False, header=False)
+            points = [line.split() for line in array_string.split('\n') if line]
+            for item in points:
+                item[0] = round(float(item[0]), 6)
+                item[1] = round(float(item[1]), 6)
+
+        progress = []
+        if self.sql == False:
+            self.combination_distance = combination_distance
+
+        for i in range(self.ants_iterations):
+            routes = []
+            routes_len = []
+
+            for i in range(self.ants_n):
+                visited = [False] * points_len
+                current_point = np.random.randint(points_len)
+                visited[current_point] = True
+                route = [current_point]
+                route_len = 0
+
+                while False in visited:
+                    unvisited = np.where(np.logical_not(visited))[0]
+                    odds = np.zeros(len(unvisited))
+
+                    for i, item in enumerate(unvisited):
+                        odds[i] = pheromone[current_point, item] ** self.ants_alpha / 
+
+
+        pass
