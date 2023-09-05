@@ -15,7 +15,6 @@ class Main:
         generations = 500
         plot = True
         sql = True
-        # sql = False
         con = None
         db_name = 'points.db'
         ants_n = 25
@@ -30,21 +29,8 @@ class Main:
         con = newModel.initDb()
         points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix = newModel.dfInput()
         newController = Controller(popSize, elite_size, mutation_rate, generations, plot, sql, con, ants_n, ants_iterations, ants_alpha, ants_beta, ants_evaporation_rate, ants_Q)
-        # newController.geneticAlgorithm(points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix)
         newController.antColonyAlgorithm(points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix)
         newModel.closeDb()
-        
-        # items = newModel.createRandomPoints()
-        # points_perm = newModel.createRandomPointsWithDistance()
-        # points_lbs_pall = newModel.addPallLbtoDf(items)
-        # add_lbs = newModel.addPallLbtoDf(points_perm)
-        # newModel.saveToCsv(add_lbs)
-
-        # newModel.initDb()
-        # newModel.sqlUpdate(points, combination_distance)
-        # newModel.closeDb()
-
-
 
 
 if __name__ == '__main__':

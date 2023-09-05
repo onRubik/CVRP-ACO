@@ -271,6 +271,8 @@ class Controller:
                     visited[next_point] = True
                     current_point = next_point
 
+                route = route + [route[0]]
+                route_len += self.antsReturnDistance(points_copy, route)
                 routes.append(route)
                 routes_len.append(route_len)
 
@@ -278,17 +280,17 @@ class Controller:
                     best_route = route
                     best_route_distance = np.sum(route_len)
                 
-                progress.append(1 / best_route_distance)
+                progress.append(best_route_distance)
             
             pheromone *= self.ants_evaporation_rate
 
-            for route, route_len in zip(routes, routes_len):
-                for i in range(points_len - 1):
-                    pheromone[route[i], route[i + 1]] += self.ants_Q / route_len
-                pheromone[route[-1], route[0]] += self.ants_Q / route_len
+            for route_zip, route_len_zip in zip(routes, routes_len):
+                for i in range(points_len-1):
+                    pheromone[route_zip[i], route_zip[i + 1]] += self.ants_Q / route_len_zip
+                pheromone[route_zip[-1], route_zip[0]] += self.ants_Q / route_len_zip
 
         from_df = []
-        for i in range(points_len):
+        for i in range(points_len+1):
             from_df.append(points_copy.loc[best_route[i], ['x', 'y']])
         
         x = [item[0] for item in from_df]
@@ -301,7 +303,7 @@ class Controller:
         if self.plot:
             plt.plot(progress)
             plt.ylabel('Distance')
-            plt.xlabel('Generation')
+            plt.xlabel('Iterations')
             plt.savefig(progress_output_fix)
             plt.show()
 
@@ -323,6 +325,15 @@ class Controller:
             point_state = next_point
 
         query_str = 'select distance from permutation_distance where x1 = '+str(points[current_point][0])+' and y1 = '+str(points[current_point][1])+' and x2 = '+str(points[point_state][0])+' and y2 = '+str(points[point_state][1])
+
+        for row in self.cur.execute(query_str):
+            segment_distance = row[0]
+        
+        return segment_distance
+    
+
+    def antsReturnDistance(self, points_copy, route):
+        query_str = 'select distance from permutation_distance where x1 = '+str(points_copy.loc[route[-2], ['x']].iloc[0])+' and y1 = '+str(points_copy.loc[route[-2], ['y']].iloc[0])+' and x2 = '+str(points_copy.loc[route[-1], ['x']].iloc[0])+' and y2 = '+str(points_copy.loc[route[-1], ['y']].iloc[0])
 
         for row in self.cur.execute(query_str):
             segment_distance = row[0]
