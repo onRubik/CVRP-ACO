@@ -44,16 +44,14 @@ class Model:
 
         arr = []
         for i in range(0,self.n):
-            x = int(random.random() * self.multiplier)
-            y = int(random.random() * self.multiplier)
+            arr.append([round(random.random() * self.multiplier, 6), round(random.random() * self.multiplier, 6)])
             
-            if self.sql:
-                point = '(' + str(x) + ',' + str(y) + ')'
-                arr.append([point, x, y])
-            if self.sql == False:
-                arr.append([x, y])
-
         df = pd.DataFrame(arr, columns=['x','y'])
+
+        if self.sql:
+            df['point'] = '(' + df['x'].astype(str) + ',' + df['y'].astype(str) + ')'
+            column_order = ['point'] + list(df.columns[:-1])
+            df = df[column_order]
 
         return [df, comb_input_fix]
 
@@ -117,14 +115,18 @@ class Model:
         
         if self.sql:
             points = pd.read_csv(points_input_fix)
-        if self.sql == False:
+        elif self.sql == False:
             with open(points_input_fix, 'r') as f:
                 reader = csv.reader(f)
                 points = list(reader)
 
             points = [[round(float(j), 6) for j in i] for i in points[1:]]
 
-        combination_distance = pd.read_csv(perm_input_fix)
+        if self.sql:
+            combination_distance = None
+        elif self.sql == False:
+            combination_distance = pd.read_csv(perm_input_fix)
+            
 
         return points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix
     
@@ -167,7 +169,7 @@ class Model:
         self.con.commit()
 
         cur.execute('''
-            insert into points(point, x, y)
+            insert into points(point, x, y, pallets, weight)
             select *
             from stage_points
             where point not in (
@@ -207,4 +209,35 @@ class Model:
         ''')
         self.con.commit()
 
+
+    def addPallLbtoDf(self, items):
+        pall = []
+        lbs = []
+        sub_arr = False
         
+        if type(items[0]) == list: sub_arr = True
+        
+        if sub_arr == True:
+            df = items[0][0]
+        elif sub_arr == False:
+            df = items[0]
+
+        for i in range(0,self.n):
+            # number of pallets are tought as if it were to be more than 8 for a big or hub store
+            if random.random() <= 0.2:
+                count = random.randint(9, 15)
+            else:
+                count = random.randint(1, 8)
+            pall.append(count)
+            weight = count * round(random.uniform(1200, 1700), 6)
+            lbs.append(weight)
+
+        df['pallets'] = pall
+        df['weight'] = lbs
+
+        if sub_arr:
+            items[0][0] = df
+            return items
+        elif sub_arr == False:
+            items[0] = df
+            return items

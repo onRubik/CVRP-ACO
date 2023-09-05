@@ -19,15 +19,19 @@ CREATE TABLE stage_permutation_distance (
 );
 
 CREATE TABLE points (
-    point CHAR    PRIMARY KEY
-                  NOT NULL,
-    x     DECIMAL NOT NULL,
-    y     DECIMAL NOT NULL
+    point   CHAR    PRIMARY KEY
+                    NOT NULL,
+    x       DECIMAL NOT NULL,
+    y       DECIMAL NOT NULL,
+    pallets INTEGER,
+    weight  DECIMAL
 );
 
 CREATE TABLE stage_points (
-    point CHAR    PRIMARY KEY
-                  NOT NULL,
-    x     DECIMAL NOT NULL,
-    y     DECIMAL NOT NULL
+    point   CHAR    PRIMARY KEY
+                    NOT NULL,
+    x       DECIMAL NOT NULL,
+    y       DECIMAL NOT NULL,
+    pallets INTEGER,
+    weight  DECIMAL
 );
