@@ -13,7 +13,6 @@ class Controller:
         self.mutation_rate = mutation_rate
         self.generations = generations
         self.plot = plot
-        # self.combination_distance = pd.DataFrame()
         self.combination_distance = None
         self.sql = sql
         self.con = con
@@ -225,8 +224,9 @@ class Controller:
 
     def antColonyAlgorithm(self, points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix):
         points_len = len(points)
+        points_copy = points.copy()
         pheromone = np.ones((points_len, points_len))
-        best_route = None
+        best_route = []
         best_route_distance = np.inf
 
         if self.sql:
@@ -244,7 +244,7 @@ class Controller:
         if self.sql == False:
             self.combination_distance = combination_distance
 
-        for i in range(self.ants_iterations):
+        for i in trange(0, self.ants_iterations):
             routes = []
             routes_len = []
 
@@ -260,7 +260,71 @@ class Controller:
                     odds = np.zeros(len(unvisited))
 
                     for i, item in enumerate(unvisited):
-                        odds[i] = pheromone[current_point, item] ** self.ants_alpha / 
+                        segment_distance = self.antsDistance(points, current_point, item, next_point=False)
+
+                        odds[i] = pheromone[current_point, item] ** self.ants_alpha / (segment_distance ** self.ants_beta)
+
+                    odds /= np.sum(odds)
+                    next_point = np.random.choice(unvisited, p=odds)
+                    route.append(next_point)
+                    route_len += self.antsDistance(points, current_point, item, next_point)
+                    visited[next_point] = True
+                    current_point = next_point
+
+                routes.append(route)
+                routes_len.append(route_len)
+
+                if route_len < best_route_distance:
+                    best_route = route
+                    best_route_distance = np.sum(route_len)
+                
+                progress.append(1 / best_route_distance)
+            
+            pheromone *= self.ants_evaporation_rate
+
+            for route, route_len in zip(routes, routes_len):
+                for i in range(points_len - 1):
+                    pheromone[route[i], route[i + 1]] += self.ants_Q / route_len
+                pheromone[route[-1], route[0]] += self.ants_Q / route_len
+
+        from_df = []
+        for i in range(points_len):
+            from_df.append(points_copy.loc[best_route[i], ['x', 'y']])
+        
+        x = [item[0] for item in from_df]
+        y = [item[1] for item in from_df]
+        df = pd.DataFrame(columns=['x','y'])
+        df['x'] = x
+        df['y'] = y
+        df.to_csv(csv_output_fix, index=False)
+
+        if self.plot:
+            plt.plot(progress)
+            plt.ylabel('Distance')
+            plt.xlabel('Generation')
+            plt.savefig(progress_output_fix)
+            plt.show()
+
+            plt.plot(x,y,'o-', label='Cordinates')
+            plt.xlabel('x')
+            plt.ylabel('y')
+            plt.savefig(route_output_fix)
+            plt.show()
+        
+        print("Final distance: " + str(best_route_distance))
+        print('best_route = ', from_df)
+        return from_df
 
 
-        pass
+    def antsDistance(self, points, current_point, item, next_point):
+        if next_point == False:
+            point_state = item
+        else:
+            point_state = next_point
+
+        query_str = 'select distance from permutation_distance where x1 = '+str(points[current_point][0])+' and y1 = '+str(points[current_point][1])+' and x2 = '+str(points[point_state][0])+' and y2 = '+str(points[point_state][1])
+
+        for row in self.cur.execute(query_str):
+            segment_distance = row[0]
+        
+        return segment_distance
