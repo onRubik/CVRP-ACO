@@ -19,7 +19,6 @@ An entire process can be completed using only .csv files as an input which is ha
 
 **Notice:**
 - The current SQL engine tested for this project is sqlite3
-- The ant colony optimization algorithm only support the sqlite3 engine at this state, the usage of a dataframe is under development
 
 The model.py file also contains functions to update and handle the SQL database if needed.
 

@@ -29,7 +29,7 @@ class Main:
         con = newModel.initDb()
         points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix = newModel.dfInput()
         newController = Controller(popSize, elite_size, mutation_rate, generations, plot, sql, con, ants_n, ants_iterations, ants_alpha, ants_beta, ants_evaporation_rate, ants_Q)
-        newController.antColonyAlgorithm(points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix)
+        newController.geneticAlgorithm(points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix)
         newModel.closeDb()
 
 
