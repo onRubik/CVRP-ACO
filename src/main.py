@@ -12,13 +12,13 @@ class Main:
         popSize = 100
         elite_size = 20
         mutation_rate = 0.01
-        generations = 500
+        generations = 300
         plot = True
-        sql = True
+        sql = False
         con = None
         db_name = 'points.db'
         ants_n = 25
-        ants_iterations = 100
+        ants_iterations = 50
         ants_alpha = 1
         ants_beta = 1
         ants_evaporation_rate = 0.5

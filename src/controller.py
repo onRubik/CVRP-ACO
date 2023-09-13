@@ -43,12 +43,12 @@ class Controller:
         for i in range(len(route)-1):
             segment_distance = self.combination_distance.where((self.combination_distance['x1']==route[i][0]) & (self.combination_distance['y1']==route[i][1]) & (self.combination_distance['x2']==route[i+1][0]) & (self.combination_distance['y2']==route[i+1][1]))
             segment_distance = segment_distance.dropna()
-            segment_distance = segment_distance.iloc[0, 4]
+            segment_distance = segment_distance.iloc[0, 5]
             distance += segment_distance
         
         segment_distance = self.combination_distance.where((self.combination_distance['x1']==route[-1][0]) & (self.combination_distance['y1']==route[-1][1]) & (self.combination_distance['x2']==route[0][0]) & (self.combination_distance['y2']==route[0][1]))
         segment_distance = segment_distance.dropna()
-        segment_distance = segment_distance.iloc[0, 4]
+        segment_distance = segment_distance.iloc[0, 5]
         distance += segment_distance
 
         return distance
@@ -224,6 +224,8 @@ class Controller:
 
     def antColonyAlgorithm(self, points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix):
         points_len = len(points)
+        if self.sql == False:
+            points = pd.DataFrame(points, columns=['x', 'y', 'pallets', 'weight'])
         points_copy = points.copy()
         pheromone = np.ones((points_len, points_len))
         best_route = []
@@ -260,19 +262,30 @@ class Controller:
                     odds = np.zeros(len(unvisited))
 
                     for i, item in enumerate(unvisited):
-                        segment_distance = self.antsDistance(points, current_point, item, next_point=False)
+                        if self.sql:
+                            segment_distance = self.sqlAntsDistance(points, current_point, item, next_point=False)
+                        elif self.sql == False:
+                            segment_distance = self.dfAntsDistance(points, current_point, item, next_point=False)
 
                         odds[i] = pheromone[current_point, item] ** self.ants_alpha / (segment_distance ** self.ants_beta)
 
                     odds /= np.sum(odds)
                     next_point = np.random.choice(unvisited, p=odds)
                     route.append(next_point)
-                    route_len += self.antsDistance(points, current_point, item, next_point)
+                    if self.sql:
+                        route_len += self.sqlAntsDistance(points, current_point, item, next_point)
+                    elif self.sql == False:
+                        route_len += self.dfAntsDistance(points, current_point, item, next_point)
+                        
                     visited[next_point] = True
                     current_point = next_point
 
                 route = route + [route[0]]
-                route_len += self.antsReturnDistance(points_copy, route)
+                if self.sql:
+                    route_len += self.sqlAntsReturnDistance(points_copy, route)
+                elif self.sql == False:
+                    route_len += self.dfAntsReturnDistance(points_copy, route)
+                
                 routes.append(route)
                 routes_len.append(route_len)
 
@@ -280,8 +293,8 @@ class Controller:
                     best_route = route
                     best_route_distance = np.sum(route_len)
                 
-                progress.append(best_route_distance)
-            
+            progress.append(best_route_distance)
+
             pheromone *= self.ants_evaporation_rate
 
             for route_zip, route_len_zip in zip(routes, routes_len):
@@ -318,7 +331,7 @@ class Controller:
         return from_df
 
 
-    def antsDistance(self, points, current_point, item, next_point):
+    def sqlAntsDistance(self, points, current_point, item, next_point):
         if next_point == False:
             point_state = item
         else:
@@ -332,10 +345,31 @@ class Controller:
         return segment_distance
     
 
-    def antsReturnDistance(self, points_copy, route):
+    def sqlAntsReturnDistance(self, points_copy, route):
         query_str = 'select distance from permutation_distance where x1 = '+str(points_copy.loc[route[-2], ['x']].iloc[0])+' and y1 = '+str(points_copy.loc[route[-2], ['y']].iloc[0])+' and x2 = '+str(points_copy.loc[route[-1], ['x']].iloc[0])+' and y2 = '+str(points_copy.loc[route[-1], ['y']].iloc[0])
 
         for row in self.cur.execute(query_str):
             segment_distance = row[0]
         
+        return segment_distance
+    
+
+    def dfAntsDistance(self, points, current_point, item, next_point):
+        if next_point == False:
+            point_state = item
+        else:
+            point_state = next_point
+
+        segment_distance = self.combination_distance.where((self.combination_distance['x1']==points.loc[current_point, ['x']].iloc[0]) & (self.combination_distance['y1']==points.loc[current_point, ['y']].iloc[0]) & (self.combination_distance['x2']==points.loc[point_state, ['x']].iloc[0]) & (self.combination_distance['y2']==points.loc[point_state, ['y']].iloc[0]))
+        segment_distance = segment_distance.dropna()
+        segment_distance = segment_distance.iloc[0, 5]
+
+        return segment_distance
+    
+
+    def dfAntsReturnDistance(self, points_copy, route):
+        segment_distance = self.combination_distance.where((self.combination_distance['x1']==points_copy.loc[route[-2], ['x']].iloc[0]) & (self.combination_distance['y1']==points_copy.loc[route[-2], ['y']].iloc[0]) & (self.combination_distance['x2']==points_copy.loc[route[-1], ['x']].iloc[0]) & (self.combination_distance['y2']==points_copy.loc[route[-1], ['y']].iloc[0]))
+        segment_distance = segment_distance.dropna()
+        segment_distance = segment_distance.iloc[0, 5]
+
         return segment_distance

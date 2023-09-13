@@ -120,7 +120,7 @@ class Model:
                 reader = csv.reader(f)
                 points = list(reader)
 
-            points = [[round(float(j), 6) for j in i] for i in points[1:]]
+            points = [[round(float(j), 6) for j in i[1:]] for i in points[1:]]
 
         if self.sql:
             combination_distance = None
