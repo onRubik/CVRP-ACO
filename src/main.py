@@ -23,6 +23,10 @@ class Main:
         ants_beta = 1
         ants_evaporation_rate = 0.5
         ants_Q = 1
+        geo_name = 'export'
+        reduced_size = 50
+        geo_count_name = 'resize_export'
+        folder_dir = 'output'
 
         newModel = Model(file_name, points_name, distance_name, n, multiplier, db_name, sql)
         newModel.imgFolder()

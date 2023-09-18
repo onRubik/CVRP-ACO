@@ -7,6 +7,7 @@ import math
 from itertools import permutations
 import csv
 import sqlite3
+import json
 
 
 class Model:
@@ -241,3 +242,53 @@ class Model:
         elif sub_arr == False:
             items[0] = df
             return items
+        
+
+    def reSizeGeoPoints(self, geo_name: str,reduced_size: int):
+        if self.os_type == 'Windows':
+            geo_input_fix = str(self.img_path) + '\\input\\' + geo_name + '.geojson'
+            geo_output_fix = str(self.img_path) + '\\output\\' + 'resize_' + geo_name + '.geojson'
+        if self.os_type == 'Linux':
+            geo_input_fix = str(self.img_path) + '/input/' + geo_name + '.geojson'
+            geo_output_fix = str(self.img_path) + '/output/' + 'resize_' + geo_name + '.geojson'
+        
+        with open(geo_input_fix, 'r') as geojson_file:
+            data = json.load(geojson_file)
+
+        selected_points = []
+
+        for feature in data.get('features', []):
+            if feature.get('geometry', {}).get('type') == 'Point':
+                selected_points.append(feature)
+
+        random.shuffle(selected_points)
+        selected_points = selected_points[:reduced_size]
+
+        result_geojson = {
+            "type": "FeatureCollection",
+            "features": selected_points
+        }
+
+        with open(geo_output_fix, 'w') as result_file:
+            json.dump(result_geojson, result_file, indent=2)
+
+    
+    def countGeoKeys(self, geo_count_name: str, folder_dir: str):
+        if self.os_type == 'Windows':
+            geo_input_fix = str(self.img_path) + '\\' + folder_dir + '\\' + geo_count_name + '.geojson'
+        if self.os_type == 'Linux':
+            geo_input_fix = str(self.img_path) + '/' + folder_dir + '/' + geo_count_name + '.geojson'
+
+        with open(geo_input_fix, 'r') as geojson_file:
+            data = json.load(geojson_file)
+
+        unique_ids = set()
+
+        for feature in data.get('features', []):
+            id_value = feature.get('id')
+            if id_value:
+                unique_ids.add(id_value)
+
+        distinct_id_count = len(unique_ids)
+
+        return distinct_id_count

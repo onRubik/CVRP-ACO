@@ -29,6 +29,24 @@ No need to install any npm packages since it uses jsdelivr:
 The index.html file can be opened without a server, it will ask for the “best route” csv file.
 
 
+# Geo data
+If you want to get real coordinates you can use https://overpass-turbo.eu/
+
+For example, you can query points with a “park” description around 70 km from Dallas City:
+```
+[out:json][timeout:25];
+(
+  node["leisure"="park"](around:70000,32.7767,-96.7970);
+  way["leisure"="park"](around:70000,32.7767,-96.7970);
+  relation["leisure"="park"](around:70000,32.7767,-96.7970);
+);
+out center;
+```
+
+Then you can use the *reSizeGeoPoints()* and *countGeoKeys()* in model.py functions to resize the result and verify its size.
+
+Future development will include the use of https://openrouteservice.org/ API to get the distance between permutations of the points.
+
 # Python
 Python version in use = 3.11.4
 
