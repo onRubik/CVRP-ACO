@@ -273,11 +273,11 @@ class Model:
             json.dump(result_geojson, result_file, indent=2)
 
     
-    def countGeoKeys(self, geo_count_name: str, folder_dir: str):
+    def countGeoKeys(self, geo_count_name: str, folder_count_dir: str):
         if self.os_type == 'Windows':
-            geo_input_fix = str(self.img_path) + '\\' + folder_dir + '\\' + geo_count_name + '.geojson'
+            geo_input_fix = str(self.img_path) + '\\' + folder_count_dir + '\\' + geo_count_name + '.geojson'
         if self.os_type == 'Linux':
-            geo_input_fix = str(self.img_path) + '/' + folder_dir + '/' + geo_count_name + '.geojson'
+            geo_input_fix = str(self.img_path) + '/' + folder_count_dir + '/' + geo_count_name + '.geojson'
 
         with open(geo_input_fix, 'r') as geojson_file:
             data = json.load(geojson_file)
@@ -292,3 +292,48 @@ class Model:
         distinct_id_count = len(unique_ids)
 
         return distinct_id_count
+    
+
+    def permGeo(self, geo_perm_name: str, folder_perm_dir: str):
+        if self.os_type == 'Windows':
+            geo_input_fix = str(self.img_path) + '\\' + folder_perm_dir + '\\' + geo_perm_name + '.geojson'
+            geo_csv_output_fix = str(self.img_path) + '\\output\\' + 'perm_' + geo_perm_name + '.csv'
+            geo_json_output_fix = str(self.img_path) + '\\output\\' + 'perm_' + geo_perm_name + '.json'
+        if self.os_type == 'Linux':
+            geo_input_fix = str(self.img_path) + '/' + folder_perm_dir + '/' + geo_perm_name + '.geojson'
+            geo_csv_output_fix = str(self.img_path) + '/output/' + 'perm_' + geo_perm_name + '.csv'
+            geo_json_output_fix = str(self.img_path) + '/output/' + 'perm_' + geo_perm_name + '.json'
+        
+        with open(geo_input_fix, 'r') as geojson_file:
+            geojson_data = json.load(geojson_file)
+
+        point_features = [feature for feature in geojson_data['features'] if feature['geometry']['type'] == 'Point']
+
+        perm = []
+
+        for pair in permutations(point_features, 2):
+            feature_0, feature_1 = pair
+            id_0 = feature_0['id']
+            id_1 = feature_1['id']
+            name_0 = feature_0['properties'].get('name', '')
+            name_1 = feature_1['properties'].get('name', '')
+            coordinates_0 = feature_0['geometry']['coordinates']
+            coordinates_1 = feature_1['geometry']['coordinates']
+
+            perm.append({
+                'id_0': id_0,
+                'id_1': id_1,
+                'name_0': name_0,
+                'name_1': name_1,
+                'coordinates_0': coordinates_0,
+                'coordinates_1': coordinates_1
+            })
+
+        with open(geo_csv_output_fix, 'w', newline='') as csvfile:
+            fieldnames = ['id_0', 'id_1', 'name_0', 'name_1', 'coordinates_0', 'coordinates_1']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(perm)
+
+        with open(geo_json_output_fix, 'w') as jsonfile:
+            json.dump(perm, jsonfile, indent=4)
