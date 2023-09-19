@@ -26,7 +26,9 @@ class Main:
         geo_name = 'export'
         reduced_size = 50
         geo_count_name = 'resize_export'
-        folder_dir = 'output'
+        folder_count_dir = 'output'
+        geo_perm_name = 'resize_export'
+        folder_perm_dir = 'output'
 
         newModel = Model(file_name, points_name, distance_name, n, multiplier, db_name, sql)
         newModel.imgFolder()
