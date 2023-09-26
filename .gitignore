@@ -7,6 +7,7 @@ src/get_points_test.py
 src/osm_data_structure_test.py
 src/geo_data_test.py
 src/geo_perm.py
+src/lambda_functions.py
 input/*.json
 output/*.json
 *.png

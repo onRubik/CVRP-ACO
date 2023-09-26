@@ -8,6 +8,8 @@ from itertools import permutations
 import csv
 import sqlite3
 import json
+import time
+import urllib3
 
 
 class Model:
@@ -148,6 +150,40 @@ class Model:
         self.con.close()
 
     
+    def geoSqlUpdate(self, points):
+        cur = self.con.cursor()
+
+        for row in cur.execute('''
+            select
+            case
+                when exists (select 1 from stage_geo_permutations)
+                then 1
+                else 0
+            end
+        '''):
+            print(int(row[0]))
+
+        if int(row[0]) == 1:
+            cur.execute('delete from stage_geo_permutations')
+            self.con.commit()
+
+        points = points.drop('index', axis=1)
+        points = points.set_index('perm')
+        points.to_sql('stage_geo_permutations', self.con, if_exists='append', index_label='perm')
+        self.con.commit()
+
+        cur.execute('''
+            insert into geo_permutations(perm, id_1, id_2, name_1, name_2, coordinates_1, coordinates_2)
+            select *
+            from stage_geo_permutations
+            where perm not in (
+                select perm
+                from geo_permutations
+            )
+        ''')
+        self.con.commit()
+
+
     def sqlUpdate(self, points, combination_distance):
         cur = self.con.cursor()
 
@@ -309,31 +345,86 @@ class Model:
 
         point_features = [feature for feature in geojson_data['features'] if feature['geometry']['type'] == 'Point']
 
-        perm = []
+        perm_csv = []
+        perm_json = {}
+        index = 1
 
         for pair in permutations(point_features, 2):
             feature_0, feature_1 = pair
-            id_0 = feature_0['id']
-            id_1 = feature_1['id']
-            name_0 = feature_0['properties'].get('name', '')
-            name_1 = feature_1['properties'].get('name', '')
-            coordinates_0 = feature_0['geometry']['coordinates']
-            coordinates_1 = feature_1['geometry']['coordinates']
-
-            perm.append({
-                'id_0': id_0,
+            id_1 = feature_0['id']
+            id_2 = feature_1['id']
+            name_1 = feature_0['properties'].get('name', '')
+            name_2 = feature_1['properties'].get('name', '')
+            coordinates_1 = feature_0['geometry']['coordinates']
+            coordinates_2 = feature_1['geometry']['coordinates']
+            
+            perm_csv.append({
+                'perm': id_1 + id_2,
+                'index': index,
                 'id_1': id_1,
-                'name_0': name_0,
+                'id_2': id_2,
                 'name_1': name_1,
-                'coordinates_0': coordinates_0,
-                'coordinates_1': coordinates_1
+                'name_2': name_2,
+                'coordinates_1': coordinates_1,
+                'coordinates_2': coordinates_2
             })
 
+            perm_json[index] = {
+                'perm': id_1 + id_2,
+                'id_1': id_1,
+                'id_2': id_2,
+                'name_1': name_1,
+                'name_2': name_2,
+                'coordinates_1': coordinates_1,
+                'coordinates_2': coordinates_2
+            }
+
+
+            index += 1
+
         with open(geo_csv_output_fix, 'w', newline='') as csvfile:
-            fieldnames = ['id_0', 'id_1', 'name_0', 'name_1', 'coordinates_0', 'coordinates_1']
+            fieldnames = ['index', 'perm', 'id_1', 'id_2', 'name_1', 'name_2', 'coordinates_1', 'coordinates_2']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
-            writer.writerows(perm)
+            writer.writerows(perm_csv)
 
         with open(geo_json_output_fix, 'w') as jsonfile:
-            json.dump(perm, jsonfile, indent=4)
+            json.dump(perm_json, jsonfile, indent=4)
+
+    
+    def getGeoORSFreeToken(self, env_var_name: str):
+        api_key = os.environ.get(env_var_name)
+
+        http = urllib3.PoolManager()
+    
+        endpoint = 'https://api.openrouteservice.org/v2/directions/driving-hgv'
+        
+        start = '-96.8100655,32.6949193'
+        end = '-96.881694,33.2233456'
+        
+        url_string = f'{endpoint}?api_key={api_key}&start={start}&end={end}'
+
+        r = http.request('GET', url_string, headers={'Content-Type': 'application/json'})
+        
+        if r.status == 200:
+            data = json.loads(r.data)
+            
+            if ('x-ratelimit-remaining' in r.headers) and ('x-ratelimit-reset' in r.headers):
+                reset_limit = int(r.headers['x-ratelimit-reset'])
+                print('reset_limit = ' + str(reset_limit))
+                remaining_quota = int(r.headers['x-ratelimit-remaining'])
+                print('remaining_quota = ' + str(remaining_quota))
+                print('response status = ' + str(r.status))
+                
+                # Extract distance and duration from the response
+                distance = data['features'][0]['properties']['segments'][0]['distance']
+                duration = data['features'][0]['properties']['segments'][0]['duration']
+            
+            # return data, remaining_quota
+                return {
+                    'remainingQuota': remaining_quota
+                }
+        else:
+            return {
+                    'error': r.status
+                }
