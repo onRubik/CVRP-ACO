@@ -6,6 +6,7 @@ class Main:
     def run(self):
         file_name = 'ran'
         points_name = 'ran_points_ran'
+        # points_name = 'perm_resize_export'
         distance_name = 'ran_dis_ran'
         n = 25
         multiplier = 200
@@ -14,7 +15,7 @@ class Main:
         mutation_rate = 0.01
         generations = 300
         plot = True
-        sql = False
+        sql = True
         con = None
         db_name = 'points.db'
         ants_n = 25
@@ -36,6 +37,11 @@ class Main:
         points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix = newModel.dfInput()
         newController = Controller(popSize, elite_size, mutation_rate, generations, plot, sql, con, ants_n, ants_iterations, ants_alpha, ants_beta, ants_evaporation_rate, ants_Q)
         newController.geneticAlgorithm(points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix)
+
+        # newModel.permGeo(geo_perm_name, folder_perm_dir)
+        # newModel.geoSqlUpdate(points)
+        # remaining_quota = newModel.getGeoORSRateLimit(env_var_name='for_chartjs')
+        # newModel.sqlGeoORSDistances(remaining_quota, env_var_name='for_chartjs')
         newModel.closeDb()
 
 
