@@ -47,14 +47,15 @@ CREATE TABLE ors_call_log (
 );
 
 CREATE TABLE geo_permutations (
-    perm          TEXT PRIMARY KEY
-                       NOT NULL,
-    id_1          TEXT NOT NULL,
-    id_2          TEXT NOT NULL,
+    perm          TEXT    PRIMARY KEY
+                          NOT NULL,
+    id_1          TEXT    NOT NULL,
+    id_2          TEXT    NOT NULL,
     name_1        TEXT,
     name_2        TEXT,
-    coordinates_1 TEXT NOT NULL,
-    coordinates_2 TEXT NOT NULL
+    coordinates_1 TEXT    NOT NULL,
+    coordinates_2 TEXT    NOT NULL,
+    distance      NUMERIC
 );
 
 CREATE TABLE stage_geo_permutations (
@@ -66,16 +67,4 @@ CREATE TABLE stage_geo_permutations (
     name_2        TEXT,
     coordinates_1 TEXT NOT NULL,
     coordinates_2 TEXT NOT NULL
-);
-
-CREATE TABLE geo_permutations_distance (
-    perm          TEXT PRIMARY KEY
-                       NOT NULL,
-    id_1          TEXT NOT NULL,
-    id_2          TEXT NOT NULL,
-    name_1        TEXT,
-    name_2        TEXT,
-    coordinates_1 TEXT NOT NULL,
-    coordinates_2 TEXT NOT NULL,
-    distance      NUMERIC NOT NULL
 );

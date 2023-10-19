@@ -34,14 +34,16 @@ class Main:
         newModel = Model(file_name, points_name, distance_name, n, multiplier, db_name, sql)
         newModel.imgFolder()
         con = newModel.initDb()
-        points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix = newModel.dfInput()
+        # points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix = newModel.dfInput()
         # newController = Controller(popSize, elite_size, mutation_rate, generations, plot, sql, con, ants_n, ants_iterations, ants_alpha, ants_beta, ants_evaporation_rate, ants_Q)
         # newController.geneticAlgorithm(points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix)
         # newModel.closeDb()
 
         # newModel.permGeo(geo_perm_name, folder_perm_dir)
         # newModel.getGeoORSFreeToken(env_var_name='for_chartjs')
-        newModel.geoSqlUpdate(points)
+        # newModel.geoSqlUpdate(points)
+        remaining_quota = newModel.getGeoORSRateLimit(env_var_name='for_chartjs')
+        newModel.sqlGeoORSDistances(remaining_quota, env_var_name='for_chartjs')
         newModel.closeDb()
 
 

@@ -10,6 +10,7 @@ import sqlite3
 import json
 import time
 import urllib3
+import tqdm
 
 
 class Model:
@@ -392,13 +393,14 @@ class Model:
             json.dump(perm_json, jsonfile, indent=4)
 
     
-    def getGeoORSFreeToken(self, env_var_name: str):
+    def getGeoORSRateLimit(self, env_var_name: str):
         api_key = os.environ.get(env_var_name)
 
         http = urllib3.PoolManager()
     
         endpoint = 'https://api.openrouteservice.org/v2/directions/driving-hgv'
         
+        # within this functions the start and end variables are hardcoded just to be able to use the driving-hgv call
         start = '-96.8100655,32.6949193'
         end = '-96.881694,33.2233456'
         
@@ -411,20 +413,71 @@ class Model:
             
             if ('x-ratelimit-remaining' in r.headers) and ('x-ratelimit-reset' in r.headers):
                 reset_limit = int(r.headers['x-ratelimit-reset'])
-                print('reset_limit = ' + str(reset_limit))
                 remaining_quota = int(r.headers['x-ratelimit-remaining'])
-                print('remaining_quota = ' + str(remaining_quota))
-                print('response status = ' + str(r.status))
                 
-                # Extract distance and duration from the response
-                distance = data['features'][0]['properties']['segments'][0]['distance']
-                duration = data['features'][0]['properties']['segments'][0]['duration']
-            
-            # return data, remaining_quota
-                return {
-                    'remainingQuota': remaining_quota
-                }
+                return remaining_quota
         else:
-            return {
-                    'error': r.status
-                }
+            print('error: ', r.status)
+
+    
+    def sqlGeoORSDistances(self, remaining_quota, env_var_name):
+        print('remaining_quota = ' + str(remaining_quota))
+        if remaining_quota > 50:
+            delay = 60/40
+            api_key = os.environ.get(env_var_name)
+            http = urllib3.PoolManager()
+            endpoint = 'https://api.openrouteservice.org/v2/directions/driving-hgv'
+
+            cur = self.con.cursor()
+
+            for row in cur.execute('''
+                select count(*)
+                from geo_permutations
+                where distance is null
+            '''):
+                print('rows missing distance = ' + str(int(row[0])))
+
+            missing_distance = int(row[0])
+            if missing_distance > 1950:
+                max_get = remaining_quota - 50
+            elif missing_distance <= 1950:
+                max_get =  min(remaining_quota - 50, missing_distance)
+
+            cur.execute('''
+                select perm, coordinates_1, coordinates_2
+                from geo_permutations 
+                where distance is null
+            ''')
+            rows = cur.fetchall()
+
+            with tqdm.tqdm(total=len(rows)) as pbar:
+                counter = 0
+                for row in rows:
+                    perm, coordinates_1, coordinates_2 = row
+                    coordinates_1 = coordinates_1.strip('[]')
+                    coordinates_2 = coordinates_2.strip('[]')
+                    distance = self.sqlFetchDistance(api_key, http, endpoint, coordinates_1, coordinates_2)
+                    if distance is not None:
+                        cur.execute('''
+                                update geo_permutations
+                                set distance = ?
+                                where perm = ?     
+                        ''', (distance, perm))
+                    time.sleep(delay)
+                    counter += 1
+                    pbar.update(1)
+                    if counter == max_get: break
+            
+            self.con.commit()
+
+    
+    def sqlFetchDistance(self, api_key, http, endpoint, coordinates_1, coordinates_2):
+        url_string = f'{endpoint}?api_key={api_key}&start={coordinates_1}&end={coordinates_2}'
+        r = http.request('GET', url_string, headers={'Content-Type': 'application/json'})
+        if r.status == 200:
+            data = json.loads(r.data)
+            distance = data['features'][0]['properties']['segments'][0]['distance']
+            return distance
+        else:
+            print('error: ', r.status)
+            return None
