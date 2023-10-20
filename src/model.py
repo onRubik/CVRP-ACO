@@ -414,9 +414,31 @@ class Model:
             if ('x-ratelimit-remaining' in r.headers) and ('x-ratelimit-reset' in r.headers):
                 reset_limit = int(r.headers['x-ratelimit-reset'])
                 remaining_quota = int(r.headers['x-ratelimit-remaining'])
+
+                cur = self.con.cursor()
+                cur.execute('''
+                    insert into ors_call_log (utc_date, utc_from_timestamp, remaining_quota, response_status)
+                    VALUES (
+                        strftime('%s', 'now', 'utc'),
+                        strftime('%Y-%m-%d %H:%M:%f', 'now', 'utc'),
+                        ?,
+                        ?
+                    )
+                ''', (str(remaining_quota), str(200)))
+                self.con.commit()
                 
                 return remaining_quota
         else:
+            cur = self.con.cursor()
+            cur.execute('''
+                insert into ors_call_log (utc_date, utc_from_timestamp, response_status)
+                VALUES (
+                    strftime('%s', 'now', 'utc'),
+                    strftime('%Y-%m-%d %H:%M:%f', 'now', 'utc'),
+                    ?
+                )
+            ''', (str(r.status)))
+            self.con.commit()
             print('error: ', r.status)
 
     
@@ -469,6 +491,7 @@ class Model:
                     if counter == max_get: break
             
             self.con.commit()
+            self.getGeoORSRateLimit(env_var_name)
 
     
     def sqlFetchDistance(self, api_key, http, endpoint, coordinates_1, coordinates_2):
