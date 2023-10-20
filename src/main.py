@@ -40,9 +40,9 @@ class Main:
 
         # newModel.permGeo(geo_perm_name, folder_perm_dir)
         # newModel.geoSqlUpdate(points)
-        # remaining_quota = newModel.getGeoORSRateLimit(env_var_name='for_chartjs')
-        # newModel.sqlGeoORSDistances(remaining_quota, env_var_name='for_chartjs')
-        newModel.getGeoORSRateLimit(env_var_name='for_chartjs')
+        remaining_quota = newModel.getGeoORSRateLimit(env_var_name='for_chartjs')
+        newModel.sqlGeoORSDistances(remaining_quota, env_var_name='for_chartjs')
+        # newModel.getGeoORSRateLimit(env_var_name='for_chartjs')
         newModel.closeDb()
 
 
