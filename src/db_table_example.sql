@@ -68,3 +68,23 @@ CREATE TABLE stage_geo_permutations (
     coordinates_1 TEXT NOT NULL,
     coordinates_2 TEXT NOT NULL
 );
+
+CREATE TABLE geo_points (
+    geo_point              TEXT    PRIMARY KEY
+                                   NOT NULL,
+    name                   TEXT,
+    coordinates            TEXT    NOT NULL,
+    delivery_freq_per_week NUMERIC,
+    pall_avg               INTEGER,
+    lbs_avg                NUMERIC
+);
+
+CREATE TABLE stage_geo_points (
+    geo_point              TEXT    PRIMARY KEY
+                                   NOT NULL,
+    name                   TEXT,
+    coordinates            TEXT    NOT NULL,
+    delivery_freq_per_week NUMERIC,
+    pall_avg               INTEGER,
+    lbs_avg                NUMERIC
+);
