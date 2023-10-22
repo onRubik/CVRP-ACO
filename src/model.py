@@ -151,7 +151,7 @@ class Model:
         self.con.close()
 
     
-    def geoSqlUpdate(self, points):
+    def geoPermSqlUpdate(self, points):
         cur = self.con.cursor()
 
         for row in cur.execute('''
@@ -180,6 +180,40 @@ class Model:
             where perm not in (
                 select perm
                 from geo_permutations
+            )
+        ''')
+        self.con.commit()
+
+
+    def geoPointsSqlUpdate(self, points):
+        cur = self.con.cursor()
+
+        for row in cur.execute('''
+            select
+            case
+                when exists (select 1 from stage_geo_points)
+                then 1
+                else 0
+            end
+        '''):
+            print(int(row[0]))
+
+        if int(row[0]) == 1:
+            cur.execute('delete from stage_geo_points')
+            self.con.commit()
+
+        points = points.drop('index', axis=1)
+        points = points.set_index('id')
+        points.to_sql('stage_geo_points', self.con, if_exists='append', index_label='id')
+        self.con.commit()
+
+        cur.execute('''
+            insert into geo_points(id, name, coordinates, delivery_freq_per_week, pall_avg, lbs_avg)
+            select *
+            from stage_geo_points
+            where id not in (
+                select id
+                from geo_points
             )
         ''')
         self.con.commit()
@@ -504,3 +538,53 @@ class Model:
         else:
             print('error: ', r.status)
             return None
+        
+
+    def pointsGeo(self, geo_perm_name: str, folder_perm_dir: str):
+        if self.os_type == 'Windows':
+            geo_input_fix = str(self.img_path) + '\\' + folder_perm_dir + '\\' + geo_perm_name + '.geojson'
+            geo_csv_output_fix = str(self.img_path) + '\\output\\' + 'points_' + geo_perm_name + '.csv'
+            geo_json_output_fix = str(self.img_path) + '\\output\\' + 'points_' + geo_perm_name + '.json'
+        if self.os_type == 'Linux':
+            geo_input_fix = str(self.img_path) + '/' + folder_perm_dir + '/' + geo_perm_name + '.geojson'
+            geo_csv_output_fix = str(self.img_path) + '/output/' + 'points_' + geo_perm_name + '.csv'
+            geo_json_output_fix = str(self.img_path) + '/output/' + 'points_' + geo_perm_name + '.json'
+        
+        with open(geo_input_fix, 'r') as geojson_file:
+            geojson_data = json.load(geojson_file)
+
+        point_features = [feature for feature in geojson_data['features'] if feature['geometry']['type'] == 'Point']
+
+        points_csv = []
+        points_json = {}
+        index = 1
+
+        for point in point_features:
+            id_1 = point['id']
+            name_1 = point['properties'].get('name', '')
+            coordinates_1 = point['geometry']['coordinates']
+            
+            points_csv.append({
+                'index': index,
+                'id': id_1,
+                'name': name_1,
+                'coordinates': coordinates_1,
+            })
+
+            points_json[index] = {
+                'id': id_1,
+                'name': name_1,
+                'coordinates': coordinates_1,
+            }
+
+
+            index += 1
+
+        with open(geo_csv_output_fix, 'w', newline='') as csvfile:
+            fieldnames = ['index', 'id', 'name', 'coordinates']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(points_csv)
+
+        with open(geo_json_output_fix, 'w') as jsonfile:
+            json.dump(points_json, jsonfile, indent=4)
