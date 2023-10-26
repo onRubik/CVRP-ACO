@@ -301,7 +301,7 @@ class Model:
             else:
                 count = random.randint(1, 8)
             pall.append(count)
-            weight = count * round(random.uniform(1200, 1700), 6)
+            weight = round(count * random.uniform(1200, 1700), 6)
             lbs.append(weight)
 
         df['pallets'] = pall
@@ -365,7 +365,7 @@ class Model:
         return distinct_id_count
     
 
-    def permGeo(self, geo_perm_name: str, folder_perm_dir: str):
+    def permGeo(self, geo_perm_name: str, folder_perm_dir: str): # saves the permutations from geojson file (pre-downsized)
         if self.os_type == 'Windows':
             geo_input_fix = str(self.img_path) + '\\' + folder_perm_dir + '\\' + geo_perm_name + '.geojson'
             geo_csv_output_fix = str(self.img_path) + '\\output\\' + 'perm_' + geo_perm_name + '.csv'
@@ -540,7 +540,7 @@ class Model:
             return None
         
 
-    def pointsGeo(self, geo_perm_name: str, folder_perm_dir: str):
+    def pointsGeo(self, geo_perm_name: str, folder_perm_dir: str): # converts geojson files (pre-resized) into filered json and csv files
         if self.os_type == 'Windows':
             geo_input_fix = str(self.img_path) + '\\' + folder_perm_dir + '\\' + geo_perm_name + '.geojson'
             geo_csv_output_fix = str(self.img_path) + '\\output\\' + 'points_' + geo_perm_name + '.csv'
@@ -588,3 +588,68 @@ class Model:
 
         with open(geo_json_output_fix, 'w') as jsonfile:
             json.dump(points_json, jsonfile, indent=4)
+
+    
+    def freqGeoPointsSql(self):
+        cur = self.con.cursor()
+
+        cur.execute('''
+                select id
+                from geo_points
+                where delivery_freq_per_week is null
+            ''')
+        rows = cur.fetchall()
+
+        if rows is None:
+            print('no rows found')
+            return None
+        
+        rows_count = len(rows)
+
+        for row in rows:
+            if random.random() <= 0.2:
+                delivery_freq_per_week = random.choice([5, 7])
+            else:
+                delivery_freq_per_week = random.choice([1, 3])
+            cur.execute('''
+                    update geo_points
+                    set delivery_freq_per_week = ?
+                    where id = ?     
+            ''', (delivery_freq_per_week , row[0]))
+
+        self.con.commit()
+        print('rows updated = ' + str(rows_count))
+
+
+    def pallLbsGeoPointsSql(self):
+        cur = self.con.cursor()
+
+        cur.execute('''
+                select id
+                from geo_points
+                where pall_avg is null
+                and lbs_avg is null
+            ''')
+        rows = cur.fetchall()
+
+        if rows is None:
+            print('no rows found')
+            return None
+        
+        rows_count = len(rows)
+
+        for row in rows:
+            if random.random() <= 0.2:
+                pall_avg = random.randint(9, 15)
+            else:
+                pall_avg = random.randint(1, 8)
+            lbs_avg = round(pall_avg * random.uniform(1200, 1700), 6)
+            cur.execute('''
+                    update geo_points
+                    set pall_avg = ?,
+                        lbs_avg = ?
+                    where id = ?     
+            ''', (pall_avg, lbs_avg, row[0]))
+
+        self.con.commit()
+        print('rows updated = ' + str(rows_count))
