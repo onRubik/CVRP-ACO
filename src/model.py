@@ -135,6 +135,23 @@ class Model:
         return points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix
     
 
+    def dvrpInput(self):
+        if self.os_type == 'Windows':
+            points_input_fix = str(self.img_path) + '\\input\\' + self.points_name + '.csv'
+            route_output_fix = str(self.img_path) + '\\output\\' + 'dvrp_route_' + self.file_name + '.png'
+            progress_output_fix = str(self.img_path) + '\\output\\' + 'dvrp_progress_' + self.file_name + '.png'
+            csv_output_fix = str(self.img_path) + '\\output\\' + 'dvrp_route_' + self.file_name + '.csv'
+        if self.os_type == 'Linux':
+            points_input_fix = str(self.img_path) + '/input/' + self.points_name + '.csv'
+            route_output_fix = str(self.img_path) + '/output/' + 'dvrp_route_' + self.file_name + '.png'
+            progress_output_fix = str(self.img_path) + '/output/' + 'dvrp_progress_' + self.file_name + '.png'
+            csv_output_fix = str(self.img_path) + '/output/' + 'dvrp_route_' + self.file_name + '.csv'
+        
+        geo_points = pd.read_csv(points_input_fix)
+
+        return geo_points, route_output_fix, progress_output_fix, csv_output_fix
+    
+
     def initDb(self):
         if self.os_type == 'Windows':
             db_path_fix = str(self.img_path) + '\\' + self.db_name

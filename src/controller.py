@@ -7,7 +7,7 @@ from tqdm import trange
 
 
 class Controller:
-    def __init__(self, popSize: int, elite_size: int, mutation_rate: float, generations: int, plot: bool, sql: bool, con, ants_n, ants_iterations, ants_alpha, ants_beta, ants_evaporation_rate, ants_Q):
+    def __init__(self, popSize: int, elite_size: int, mutation_rate: float, generations: int, plot: bool, sql: bool, con, ants_n, ants_iterations, ants_alpha, ants_beta, ants_evaporation_rate, ants_Q, dvrp: bool):
         self.popSize = popSize
         self.elite_size = elite_size
         self.mutation_rate = mutation_rate
@@ -23,18 +23,19 @@ class Controller:
         self.ants_beta = ants_beta
         self.ants_evaporation_rate = ants_evaporation_rate
         self.ants_Q = ants_Q
+        self.dvrp = dvrp
 
 
-    def createRoute(self, cityList):
-        route = random.sample(cityList, len(cityList))
+    def createRoute(self, points):
+        route = random.sample(points, len(points))
         return route
 
 
-    def initialPopulation(self, popSize, cityList):
+    def initialPopulation(self, popSize, points):
         population = []
 
         for i in range(0, popSize):
-            population.append(self.createRoute(cityList))
+            population.append(self.createRoute(points))
         return population
     
 
@@ -55,17 +56,36 @@ class Controller:
     
 
     def sqlFitnessFunction(self, route):
+        # print(route)
         distance = 0
-        for i in range(len(route)-1):
-            query_str = 'select distance from permutation_distance where x1 = '+str(route[i][0])+' and y1 = '+str(route[i][1])+' and x2 = '+str(route[i+1][0])+' and y2 = '+str(route[i+1][1])
+        if not self.dvrp:
+            sql_table_name = 'permutation_distance'
+        elif self.dvrp:
+            sql_table_name = 'geo_permutations'
+
+        if not self.dvrp:
+            for i in range(len(route)-1):
+                query_str = 'select distance from ' + sql_table_name + ' where x1 = '+str(route[i][0])+' and y1 = '+str(route[i][1])+' and x2 = '+str(route[i+1][0])+' and y2 = '+str(route[i+1][1])
+                for row in self.cur.execute(query_str):
+                    segment_distance = row[0]
+                distance += segment_distance
+
+            query_str = 'select distance from ' + sql_table_name + ' where x1 = '+str(route[-1][0])+' and y1 = '+str(route[-1][1])+' and x2 = '+str(route[0][0])+' and y2 = '+str(route[0][1])
             for row in self.cur.execute(query_str):
                 segment_distance = row[0]
             distance += segment_distance
+        elif self.dvrp:
+            for i in range(len(route)-1):
+                query_str = 'select distance from ' + sql_table_name + ' where id_1 = '+"'"+str(route[i][0])+"'"+' and id_2 = '+"'"+str(route[i+1][0])+"'"
+                # print(query_str)
+                for row in self.cur.execute(query_str):
+                    segment_distance = row[0]
+                distance += segment_distance
 
-        query_str = 'select distance from permutation_distance where x1 = '+str(route[-1][0])+' and y1 = '+str(route[-1][1])+' and x2 = '+str(route[0][0])+' and y2 = '+str(route[0][1])
-        for row in self.cur.execute(query_str):
-            segment_distance = row[0]
-        distance += segment_distance
+            query_str = 'select distance from ' + sql_table_name + ' where id_1 = '+"'"+str(route[i][0])+"'"+' and id_2 = '+"'"+str(route[i+1][0])+"'"
+            for row in self.cur.execute(query_str):
+                segment_distance = row[0]
+            distance += segment_distance
 
         return distance
 
@@ -373,3 +393,51 @@ class Controller:
         segment_distance = segment_distance.iloc[0, 5]
 
         return segment_distance
+    
+
+    def dvrpGeneticAlgorithm(self, geo_points, route_output_fix, progress_output_fix, csv_output_fix): # dvrp stands for dynamic vehicle routing problem
+        self.cur = self.con.cursor()
+        selected_columns = ['id']
+        geo_points = geo_points[selected_columns].values
+        selected_df = pd.DataFrame(geo_points, columns=selected_columns)
+        array_string = selected_df.to_string(index=False, header=False)
+        geo_points = [line.split() for line in array_string.split('\n') if line]
+        # for item in geo_points:
+        #     item[0] = round(float(item[0]), 6)
+        #     item[1] = round(float(item[1]), 6)
+
+        progress = []
+        pop = self.initialPopulation(self.popSize, geo_points)
+        initial_distance = 1 / self.rankRoutes(pop)[0][1]
+        print("Initial distance: " + str(initial_distance))
+        
+        for i in trange(0, self.generations):
+            pop = self.nextGeneration(pop, self.elite_size, self.mutation_rate)
+            progress.append(1 / self.rankRoutes(pop)[0][1])
+        
+        print("Final distance: " + str(1 / self.rankRoutes(pop)[0][1]))
+        best_route_index = self.rankRoutes(pop)[0][0]
+        best_route = pop[best_route_index]
+        best_route = best_route + [best_route[0]]
+        # x = [item[0] for item in best_route]
+        # y = [item[1] for item in best_route]
+        df = pd.DataFrame(columns=['id'])
+        df['id'] = best_route
+        # df['y'] = y
+        df.to_csv(csv_output_fix, index=False)
+
+        # if self.plot:
+        #     plt.plot(progress)
+        #     plt.ylabel('Distance')
+        #     plt.xlabel('Generation')
+        #     plt.savefig(progress_output_fix)
+        #     plt.show()
+
+        #     plt.plot(x,y,'o-', label='Cordinates')
+        #     plt.xlabel('x')
+        #     plt.ylabel('y')
+        #     plt.savefig(route_output_fix)
+        #     plt.show()
+                
+        print('best_route = ', best_route)
+        return best_route
