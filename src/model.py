@@ -141,15 +141,16 @@ class Model:
             route_output_fix = str(self.img_path) + '\\output\\' + 'dvrp_route_' + self.file_name + '.png'
             progress_output_fix = str(self.img_path) + '\\output\\' + 'dvrp_progress_' + self.file_name + '.png'
             csv_output_fix = str(self.img_path) + '\\output\\' + 'dvrp_route_' + self.file_name + '.csv'
+            geojson_output_fix = str(self.img_path) + '\\output\\' + 'dvrp_route_' + self.file_name + '.geojson'
         if self.os_type == 'Linux':
             points_input_fix = str(self.img_path) + '/input/' + self.points_name + '.csv'
             route_output_fix = str(self.img_path) + '/output/' + 'dvrp_route_' + self.file_name + '.png'
             progress_output_fix = str(self.img_path) + '/output/' + 'dvrp_progress_' + self.file_name + '.png'
-            csv_output_fix = str(self.img_path) + '/output/' + 'dvrp_route_' + self.file_name + '.csv'
+            geojson_output_fix = str(self.img_path) + '/output/' + 'dvrp_route_' + self.file_name + '.geojson'
         
         geo_points = pd.read_csv(points_input_fix)
 
-        return geo_points, route_output_fix, progress_output_fix, csv_output_fix
+        return geo_points, route_output_fix, progress_output_fix, csv_output_fix, geojson_output_fix
     
 
     def initDb(self):
@@ -670,3 +671,57 @@ class Model:
 
         self.con.commit()
         print('rows updated = ' + str(rows_count))
+
+
+    def postGeojsonORSdirections(self, geojson_output_fix, coordinates: list, env_var_name: str):
+        api_key = os.environ.get(env_var_name)
+
+        http = urllib3.PoolManager()
+    
+        endpoint = 'https://api.openrouteservice.org/v2/directions/driving-car/geojson'
+
+        headers = {
+            'Accept': 'application/json, application/geo+json, application/gpx+xml, img/png; charset=utf-8',
+            'Authorization': api_key,
+            'Content-Type': 'application/json; charset=utf-8'
+        }
+
+        body = {"coordinates": coordinates}
+        encoded_body = json.dumps(body).encode('utf-8')
+
+        r = http.request('POST', endpoint, body=encoded_body, headers=headers)
+
+        if r.status == 200:
+            data = json.loads(r.data)
+            
+            if ('x-ratelimit-remaining' in r.headers) and ('x-ratelimit-reset' in r.headers):
+                reset_limit = int(r.headers['x-ratelimit-reset'])
+                remaining_quota = int(r.headers['x-ratelimit-remaining'])
+
+                cur = self.con.cursor()
+                cur.execute('''
+                    insert into ors_call_log (utc_date, utc_from_timestamp, remaining_quota, response_status)
+                    VALUES (
+                        strftime('%s', 'now', 'utc'),
+                        strftime('%Y-%m-%d %H:%M:%f', 'now', 'utc'),
+                        ?,
+                        ?
+                    )
+                ''', (str(remaining_quota), str(200)))
+                self.con.commit()
+                
+                with open(geojson_output_fix, 'w') as file:
+                    file.write(r.data.decode('utf-8'))
+                print('geojson route saved = ', str(geojson_output_fix))
+        else:
+            cur = self.con.cursor()
+            cur.execute('''
+                insert into ors_call_log (utc_date, utc_from_timestamp, response_status)
+                VALUES (
+                    strftime('%s', 'now', 'utc'),
+                    strftime('%Y-%m-%d %H:%M:%f', 'now', 'utc'),
+                    ?
+                )
+            ''', (str(r.status)))
+            self.con.commit()
+            print('error: ', r.status)

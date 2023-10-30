@@ -4,6 +4,7 @@ import operator
 import pandas as pd
 import matplotlib.pyplot as plt
 from tqdm import trange
+import ast
 
 
 class Controller:
@@ -56,7 +57,6 @@ class Controller:
     
 
     def sqlFitnessFunction(self, route):
-        # print(route)
         distance = 0
         if not self.dvrp:
             sql_table_name = 'permutation_distance'
@@ -77,7 +77,6 @@ class Controller:
         elif self.dvrp:
             for i in range(len(route)-1):
                 query_str = 'select distance from ' + sql_table_name + ' where id_1 = '+"'"+str(route[i][0])+"'"+' and id_2 = '+"'"+str(route[i+1][0])+"'"
-                # print(query_str)
                 for row in self.cur.execute(query_str):
                     segment_distance = row[0]
                 distance += segment_distance
@@ -402,9 +401,6 @@ class Controller:
         selected_df = pd.DataFrame(geo_points, columns=selected_columns)
         array_string = selected_df.to_string(index=False, header=False)
         geo_points = [line.split() for line in array_string.split('\n') if line]
-        # for item in geo_points:
-        #     item[0] = round(float(item[0]), 6)
-        #     item[1] = round(float(item[1]), 6)
 
         progress = []
         pop = self.initialPopulation(self.popSize, geo_points)
@@ -419,25 +415,41 @@ class Controller:
         best_route_index = self.rankRoutes(pop)[0][0]
         best_route = pop[best_route_index]
         best_route = best_route + [best_route[0]]
-        # x = [item[0] for item in best_route]
-        # y = [item[1] for item in best_route]
-        df = pd.DataFrame(columns=['id'])
-        df['id'] = best_route
-        # df['y'] = y
+        x = [] # longitud
+        y= [] # latitud
+        coordinates = []
+        for item in best_route:
+            coordinate_str = self.sqlGetCoordinates(item)
+            coordinate = ast.literal_eval(coordinate_str.strip())
+            x.append(coordinate[0])
+            y.append(coordinate[1])
+            coordinates.append(coordinate)
+        
+        df = pd.DataFrame(columns=['x','y'])
+        df['x'] = x
+        df['y'] = y
         df.to_csv(csv_output_fix, index=False)
 
-        # if self.plot:
-        #     plt.plot(progress)
-        #     plt.ylabel('Distance')
-        #     plt.xlabel('Generation')
-        #     plt.savefig(progress_output_fix)
-        #     plt.show()
+        if self.plot:
+            plt.plot(progress)
+            plt.ylabel('Distance')
+            plt.xlabel('Generation')
+            plt.savefig(progress_output_fix)
+            plt.show()
 
-        #     plt.plot(x,y,'o-', label='Cordinates')
-        #     plt.xlabel('x')
-        #     plt.ylabel('y')
-        #     plt.savefig(route_output_fix)
-        #     plt.show()
+            plt.plot(x,y,'o-', label='Cordinates')
+            plt.xlabel('x')
+            plt.ylabel('y')
+            plt.savefig(route_output_fix)
+            plt.show()
                 
         print('best_route = ', best_route)
-        return best_route
+        return best_route, coordinates
+    
+
+    def sqlGetCoordinates(self, point: str):
+        sql_table_name = 'geo_points'
+        query_str = 'select coordinates from ' + sql_table_name + ' where id = '+"'"+str(point[0])+"'"
+        for row in self.cur.execute(query_str):
+            coordinates = row[0]
+        return coordinates

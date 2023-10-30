@@ -16,8 +16,9 @@ class Main:
         popSize = 100
         elite_size = 20
         mutation_rate = 0.01
-        # generations = 300
-        generations = 20
+        generations = 300
+        # generations = 250
+        # generations = 5
         plot = True
         sql = True
         con = None
@@ -40,10 +41,11 @@ class Main:
         newModel.imgFolder()
         con = newModel.initDb()
         # points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix = newModel.dfInput()
-        points, route_output_fix, progress_output_fix, csv_output_fix = newModel.dvrpInput()
+        points, route_output_fix, progress_output_fix, csv_output_fix, geojson_output_fix = newModel.dvrpInput()
         newController = Controller(popSize, elite_size, mutation_rate, generations, plot, sql, con, ants_n, ants_iterations, ants_alpha, ants_beta, ants_evaporation_rate, ants_Q, dvrp)
         # newController.geneticAlgorithm(points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix)
-        newController.dvrpGeneticAlgorithm(points, route_output_fix, progress_output_fix, csv_output_fix)
+        _, coordinates = newController.dvrpGeneticAlgorithm(points, route_output_fix, progress_output_fix, csv_output_fix)
+        newModel.postGeojsonORSdirections(geojson_output_fix, coordinates, env_var_name='for_chartjs')
 
         # print(newModel.countGeoKeys(geo_count_name, folder_count_dir))
         # newModel.permGeo(geo_perm_name, folder_perm_dir)
