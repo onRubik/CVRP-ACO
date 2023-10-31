@@ -5,7 +5,7 @@ from model import Model
 class Main:
     def run(self):
         # file_name = 'ran'
-        file_name = 'geo_test_1_'
+        file_name = 'geo_test_ants'
         # points_name = 'ran_points_ran'
         # points_name = 'perm_resize_export'
         points_name = 'points_resize_export'
@@ -23,8 +23,11 @@ class Main:
         sql = True
         con = None
         db_name = 'points.db'
-        ants_n = 25
-        ants_iterations = 50
+        # ants_n = 25
+        ants_n = 50
+        # ants_iterations = 100
+        # ants_iterations = 50
+        ants_iterations = 5
         ants_alpha = 1
         ants_beta = 1
         ants_evaporation_rate = 0.5
@@ -44,7 +47,8 @@ class Main:
         points, route_output_fix, progress_output_fix, csv_output_fix, geojson_output_fix = newModel.dvrpInput()
         newController = Controller(popSize, elite_size, mutation_rate, generations, plot, sql, con, ants_n, ants_iterations, ants_alpha, ants_beta, ants_evaporation_rate, ants_Q, dvrp)
         # newController.geneticAlgorithm(points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix)
-        _, coordinates = newController.dvrpGeneticAlgorithm(points, route_output_fix, progress_output_fix, csv_output_fix)
+        # _, coordinates = newController.dvrpGeneticAlgorithm(points, route_output_fix, progress_output_fix, csv_output_fix)
+        _, coordinates = newController.dvrpAntColonyAlgorithm(points, route_output_fix, progress_output_fix, csv_output_fix)
         newModel.postGeojsonORSdirections(geojson_output_fix, coordinates, env_var_name='for_chartjs')
 
         # print(newModel.countGeoKeys(geo_count_name, folder_count_dir))
