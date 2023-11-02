@@ -573,4 +573,4 @@ class Controller:
         
         print("Final distance: " + str(best_route_distance))
         print('best_route = ', from_df)
-        return from_df, coordinates
+        return best_route_distance, from_df, coordinates

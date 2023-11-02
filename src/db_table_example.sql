@@ -88,3 +88,14 @@ CREATE TABLE stage_geo_points (
     pall_avg               INTEGER,
     lbs_avg                NUMERIC
 );
+
+CREATE TABLE ors_directions_geojson_post (
+    utc_date            INTEGER NOT NULL,
+    utc_from_timestamp  TEXT    NOT NULL,
+    batch_identifier    TEXT    UNIQUE
+                                NOT NULL,
+    data                TEXT    NOT NULL,
+    distance_algorithm   NUMERIC NOT NULL,
+    distance_pre_load NUMERIC NOT NULL, 
+    distance_after_load NUMERIC 
+);

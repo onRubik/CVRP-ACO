@@ -26,9 +26,9 @@ class Main:
         # ants_n = 25
         ants_n = 50
         # ants_iterations = 100
-        ants_iterations = 50
+        # ants_iterations = 50
         # ants_iterations = 5
-        # ants_iterations = 2
+        ants_iterations = 2
         ants_alpha = 1
         ants_beta = 1
         ants_evaporation_rate = 0.5
@@ -49,8 +49,9 @@ class Main:
         newController = Controller(popSize, elite_size, mutation_rate, generations, plot, sql, con, ants_n, ants_iterations, ants_alpha, ants_beta, ants_evaporation_rate, ants_Q, dvrp)
         # newController.geneticAlgorithm(points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix)
         # _, coordinates = newController.dvrpGeneticAlgorithm(points, route_output_fix, progress_output_fix, csv_output_fix)
-        _, coordinates = newController.dvrpAntColonyAlgorithm(points, route_output_fix, progress_output_fix, csv_output_fix)
-        newModel.postGeojsonORSdirections(geojson_output_fix, coordinates, env_var_name='for_chartjs')
+        best_route_distance, _, coordinates = newController.dvrpAntColonyAlgorithm(points, route_output_fix, progress_output_fix, csv_output_fix)
+        r_data = newModel.postGeojsonORSdirections(geojson_output_fix, coordinates, env_var_name='for_chartjs')
+        newModel.sqlInsertPostGeojsonORSdirections(r_data, best_route_distance)
 
         # print(newModel.countGeoKeys(geo_count_name, folder_count_dir))
         # newModel.permGeo(geo_perm_name, folder_perm_dir)
