@@ -3,13 +3,16 @@
 
 
 # Project current state
-This project currently contains the backend to solve and graph a TSP problem (Traveling Salesman Problem) using a genetic algorithm & ant colony optimization (Python backend), Chartjs for the graphing component (frontend). In previous commits the project used p5js for the front end, but for the mean time it is way easier to set it up with Chartjs. The output process (backend) also saves local files with images created with matplotlib, and csv files with rather the points data, the distances and permutations or the best route created.
+This project currently contains the backend to solve and graph a TSP problem (Traveling Salesman Problem) using a genetic algorithm (GA) & ant colony optimization (ACO), Chartjs for the graphing component (frontend). In previous commits the project used p5js for the front end, but for the mean time it is way easier to set it up with Chartjs. The output process (backend) also saves local files with images created with matplotlib, and csv files with rather the points data, the distances and permutations or the best route created.
 
 **Why permutations and not combinations?**
 The objective is to implement this project to handle transportation and logistic operations, so in real scenario, the distance for a vehicle to move from A to B most often times won’t be the same as from B to A, why? Because of U-turns, detours, bridges, etc.
 
 
 ## Backend usage
+**main.py file functions:**
+- **Current functions completes an input-output process with the ACO algorithm win a pre-rezized geojson file.**
+
 The main.py in the main branch calls the necessary functions to perform an input-output process to solve the TSP problem with pre-acquired data.
 
 The model.py file contains functions to create (x, y) data points from scratch that can be stored as a .csv file or in a relational database for later use.

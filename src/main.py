@@ -26,8 +26,9 @@ class Main:
         # ants_n = 25
         ants_n = 50
         # ants_iterations = 100
-        # ants_iterations = 50
-        ants_iterations = 5
+        ants_iterations = 50
+        # ants_iterations = 5
+        # ants_iterations = 2
         ants_alpha = 1
         ants_beta = 1
         ants_evaporation_rate = 0.5
