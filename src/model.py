@@ -11,6 +11,7 @@ import json
 import time
 import urllib3
 import tqdm
+from uuid import uuid4
 
 
 class Model:
@@ -678,7 +679,7 @@ class Model:
 
         http = urllib3.PoolManager()
     
-        endpoint = 'https://api.openrouteservice.org/v2/directions/driving-car/geojson'
+        endpoint = 'https://api.openrouteservice.org/v2/directions/driving-hgv/geojson'
 
         headers = {
             'Accept': 'application/json, application/geo+json, application/gpx+xml, img/png; charset=utf-8',
@@ -713,6 +714,7 @@ class Model:
                 with open(geojson_output_fix, 'w') as file:
                     file.write(r.data.decode('utf-8'))
                 print('geojson route saved = ', str(geojson_output_fix))
+                return r.data
         else:
             cur = self.con.cursor()
             cur.execute('''
@@ -725,3 +727,23 @@ class Model:
             ''', (str(r.status)))
             self.con.commit()
             print('error: ', r.status)
+
+
+    def sqlInsertPostGeojsonORSdirections(self, r_data, best_route_distance):
+        cur = self.con.cursor()
+        batch_identifier = str(uuid4())
+        json_r_data = json.loads(r_data)
+        distance_pre_load = json_r_data['features'][0]['properties']['summary']['distance']
+        cur.execute('''
+            insert into ors_directions_geojson_post (utc_date, utc_from_timestamp, batch_identifier, data, distance_algorithm, distance_pre_load, distance_after_load)
+            VALUES (
+                strftime('%s', 'now', 'utc'),
+                strftime('%Y-%m-%d %H:%M:%f', 'now', 'utc'),
+                ?,
+                ?,
+                ?,
+                ?,
+                null
+            )
+        ''', (str(batch_identifier), str(r_data), str(best_route_distance), str(distance_pre_load)))
+        self.con.commit()
