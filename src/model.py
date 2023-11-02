@@ -135,6 +135,24 @@ class Model:
         return points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix
     
 
+    def dvrpInput(self):
+        if self.os_type == 'Windows':
+            points_input_fix = str(self.img_path) + '\\input\\' + self.points_name + '.csv'
+            route_output_fix = str(self.img_path) + '\\output\\' + 'dvrp_route_' + self.file_name + '.png'
+            progress_output_fix = str(self.img_path) + '\\output\\' + 'dvrp_progress_' + self.file_name + '.png'
+            csv_output_fix = str(self.img_path) + '\\output\\' + 'dvrp_route_' + self.file_name + '.csv'
+            geojson_output_fix = str(self.img_path) + '\\output\\' + 'dvrp_route_' + self.file_name + '.geojson'
+        if self.os_type == 'Linux':
+            points_input_fix = str(self.img_path) + '/input/' + self.points_name + '.csv'
+            route_output_fix = str(self.img_path) + '/output/' + 'dvrp_route_' + self.file_name + '.png'
+            progress_output_fix = str(self.img_path) + '/output/' + 'dvrp_progress_' + self.file_name + '.png'
+            geojson_output_fix = str(self.img_path) + '/output/' + 'dvrp_route_' + self.file_name + '.geojson'
+        
+        geo_points = pd.read_csv(points_input_fix)
+
+        return geo_points, route_output_fix, progress_output_fix, csv_output_fix, geojson_output_fix
+    
+
     def initDb(self):
         if self.os_type == 'Windows':
             db_path_fix = str(self.img_path) + '\\' + self.db_name
@@ -151,7 +169,7 @@ class Model:
         self.con.close()
 
     
-    def geoSqlUpdate(self, points):
+    def geoPermSqlUpdate(self, points):
         cur = self.con.cursor()
 
         for row in cur.execute('''
@@ -180,6 +198,40 @@ class Model:
             where perm not in (
                 select perm
                 from geo_permutations
+            )
+        ''')
+        self.con.commit()
+
+
+    def geoPointsSqlUpdate(self, points):
+        cur = self.con.cursor()
+
+        for row in cur.execute('''
+            select
+            case
+                when exists (select 1 from stage_geo_points)
+                then 1
+                else 0
+            end
+        '''):
+            print(int(row[0]))
+
+        if int(row[0]) == 1:
+            cur.execute('delete from stage_geo_points')
+            self.con.commit()
+
+        points = points.drop('index', axis=1)
+        points = points.set_index('id')
+        points.to_sql('stage_geo_points', self.con, if_exists='append', index_label='id')
+        self.con.commit()
+
+        cur.execute('''
+            insert into geo_points(id, name, coordinates, delivery_freq_per_week, pall_avg, lbs_avg)
+            select *
+            from stage_geo_points
+            where id not in (
+                select id
+                from geo_points
             )
         ''')
         self.con.commit()
@@ -267,7 +319,7 @@ class Model:
             else:
                 count = random.randint(1, 8)
             pall.append(count)
-            weight = count * round(random.uniform(1200, 1700), 6)
+            weight = round(count * random.uniform(1200, 1700), 6)
             lbs.append(weight)
 
         df['pallets'] = pall
@@ -331,7 +383,7 @@ class Model:
         return distinct_id_count
     
 
-    def permGeo(self, geo_perm_name: str, folder_perm_dir: str):
+    def permGeo(self, geo_perm_name: str, folder_perm_dir: str): # saves the permutations from geojson file (pre-downsized)
         if self.os_type == 'Windows':
             geo_input_fix = str(self.img_path) + '\\' + folder_perm_dir + '\\' + geo_perm_name + '.geojson'
             geo_csv_output_fix = str(self.img_path) + '\\output\\' + 'perm_' + geo_perm_name + '.csv'
@@ -504,3 +556,172 @@ class Model:
         else:
             print('error: ', r.status)
             return None
+        
+
+    def pointsGeo(self, geo_perm_name: str, folder_perm_dir: str): # converts geojson files (pre-resized) into filered json and csv files
+        if self.os_type == 'Windows':
+            geo_input_fix = str(self.img_path) + '\\' + folder_perm_dir + '\\' + geo_perm_name + '.geojson'
+            geo_csv_output_fix = str(self.img_path) + '\\output\\' + 'points_' + geo_perm_name + '.csv'
+            geo_json_output_fix = str(self.img_path) + '\\output\\' + 'points_' + geo_perm_name + '.json'
+        if self.os_type == 'Linux':
+            geo_input_fix = str(self.img_path) + '/' + folder_perm_dir + '/' + geo_perm_name + '.geojson'
+            geo_csv_output_fix = str(self.img_path) + '/output/' + 'points_' + geo_perm_name + '.csv'
+            geo_json_output_fix = str(self.img_path) + '/output/' + 'points_' + geo_perm_name + '.json'
+        
+        with open(geo_input_fix, 'r') as geojson_file:
+            geojson_data = json.load(geojson_file)
+
+        point_features = [feature for feature in geojson_data['features'] if feature['geometry']['type'] == 'Point']
+
+        points_csv = []
+        points_json = {}
+        index = 1
+
+        for point in point_features:
+            id_1 = point['id']
+            name_1 = point['properties'].get('name', '')
+            coordinates_1 = point['geometry']['coordinates']
+            
+            points_csv.append({
+                'index': index,
+                'id': id_1,
+                'name': name_1,
+                'coordinates': coordinates_1,
+            })
+
+            points_json[index] = {
+                'id': id_1,
+                'name': name_1,
+                'coordinates': coordinates_1,
+            }
+
+
+            index += 1
+
+        with open(geo_csv_output_fix, 'w', newline='') as csvfile:
+            fieldnames = ['index', 'id', 'name', 'coordinates']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(points_csv)
+
+        with open(geo_json_output_fix, 'w') as jsonfile:
+            json.dump(points_json, jsonfile, indent=4)
+
+    
+    def freqGeoPointsSql(self):
+        cur = self.con.cursor()
+
+        cur.execute('''
+                select id
+                from geo_points
+                where delivery_freq_per_week is null
+            ''')
+        rows = cur.fetchall()
+
+        if rows is None:
+            print('no rows found')
+            return None
+        
+        rows_count = len(rows)
+
+        for row in rows:
+            if random.random() <= 0.2:
+                delivery_freq_per_week = random.choice([5, 7])
+            else:
+                delivery_freq_per_week = random.choice([1, 3])
+            cur.execute('''
+                    update geo_points
+                    set delivery_freq_per_week = ?
+                    where id = ?     
+            ''', (delivery_freq_per_week , row[0]))
+
+        self.con.commit()
+        print('rows updated = ' + str(rows_count))
+
+
+    def pallLbsGeoPointsSql(self):
+        cur = self.con.cursor()
+
+        cur.execute('''
+                select id
+                from geo_points
+                where pall_avg is null
+                and lbs_avg is null
+            ''')
+        rows = cur.fetchall()
+
+        if rows is None:
+            print('no rows found')
+            return None
+        
+        rows_count = len(rows)
+
+        for row in rows:
+            if random.random() <= 0.2:
+                pall_avg = random.randint(9, 15)
+            else:
+                pall_avg = random.randint(1, 8)
+            lbs_avg = round(pall_avg * random.uniform(1200, 1700), 6)
+            cur.execute('''
+                    update geo_points
+                    set pall_avg = ?,
+                        lbs_avg = ?
+                    where id = ?     
+            ''', (pall_avg, lbs_avg, row[0]))
+
+        self.con.commit()
+        print('rows updated = ' + str(rows_count))
+
+
+    def postGeojsonORSdirections(self, geojson_output_fix, coordinates: list, env_var_name: str):
+        api_key = os.environ.get(env_var_name)
+
+        http = urllib3.PoolManager()
+    
+        endpoint = 'https://api.openrouteservice.org/v2/directions/driving-car/geojson'
+
+        headers = {
+            'Accept': 'application/json, application/geo+json, application/gpx+xml, img/png; charset=utf-8',
+            'Authorization': api_key,
+            'Content-Type': 'application/json; charset=utf-8'
+        }
+
+        body = {"coordinates": coordinates}
+        encoded_body = json.dumps(body).encode('utf-8')
+
+        r = http.request('POST', endpoint, body=encoded_body, headers=headers)
+
+        if r.status == 200:
+            data = json.loads(r.data)
+            
+            if ('x-ratelimit-remaining' in r.headers) and ('x-ratelimit-reset' in r.headers):
+                reset_limit = int(r.headers['x-ratelimit-reset'])
+                remaining_quota = int(r.headers['x-ratelimit-remaining'])
+
+                cur = self.con.cursor()
+                cur.execute('''
+                    insert into ors_call_log (utc_date, utc_from_timestamp, remaining_quota, response_status)
+                    VALUES (
+                        strftime('%s', 'now', 'utc'),
+                        strftime('%Y-%m-%d %H:%M:%f', 'now', 'utc'),
+                        ?,
+                        ?
+                    )
+                ''', (str(remaining_quota), str(200)))
+                self.con.commit()
+                
+                with open(geojson_output_fix, 'w') as file:
+                    file.write(r.data.decode('utf-8'))
+                print('geojson route saved = ', str(geojson_output_fix))
+        else:
+            cur = self.con.cursor()
+            cur.execute('''
+                insert into ors_call_log (utc_date, utc_from_timestamp, response_status)
+                VALUES (
+                    strftime('%s', 'now', 'utc'),
+                    strftime('%Y-%m-%d %H:%M:%f', 'now', 'utc'),
+                    ?
+                )
+            ''', (str(r.status)))
+            self.con.commit()
+            print('error: ', r.status)
