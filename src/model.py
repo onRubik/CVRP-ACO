@@ -714,7 +714,8 @@ class Model:
                 with open(geojson_output_fix, 'w') as file:
                     file.write(r.data.decode('utf-8'))
                 print('geojson route saved = ', str(geojson_output_fix))
-                return r.data
+                # return r.data
+                return r.data.decode('utf-8')
         else:
             cur = self.con.cursor()
             cur.execute('''
