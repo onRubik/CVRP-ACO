@@ -434,7 +434,8 @@ class Controller:
             pop = self.nextGeneration(pop, self.elite_size, self.mutation_rate)
             progress.append(1 / self.rankRoutes(pop)[0][1])
         
-        print("Final distance: " + str(1 / self.rankRoutes(pop)[0][1]))
+        best_route_distance = 1 / self.rankRoutes(pop)[0][1]
+        print("Final distance: " + str(best_route_distance))
         best_route_index = self.rankRoutes(pop)[0][0]
         best_route = pop[best_route_index]
         best_route = best_route + [best_route[0]]
@@ -467,7 +468,7 @@ class Controller:
             plt.show()
                 
         print('best_route = ', best_route)
-        return best_route, coordinates
+        return best_route_distance, best_route, coordinates
     
 
     def sqlGetCoordinates(self, point: str):
