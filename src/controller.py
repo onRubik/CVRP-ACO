@@ -5,6 +5,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from tqdm import trange
 import ast
+from sklearn.cluster import KMeans
+from sklearn.metrics.pairwise import haversine_distances
+from math import radians
 
 
 class Controller:
@@ -434,7 +437,8 @@ class Controller:
             pop = self.nextGeneration(pop, self.elite_size, self.mutation_rate)
             progress.append(1 / self.rankRoutes(pop)[0][1])
         
-        print("Final distance: " + str(1 / self.rankRoutes(pop)[0][1]))
+        best_route_distance = 1 / self.rankRoutes(pop)[0][1]
+        print("Final distance: " + str(best_route_distance))
         best_route_index = self.rankRoutes(pop)[0][0]
         best_route = pop[best_route_index]
         best_route = best_route + [best_route[0]]
@@ -467,7 +471,7 @@ class Controller:
             plt.show()
                 
         print('best_route = ', best_route)
-        return best_route, coordinates
+        return best_route_distance, best_route, coordinates
     
 
     def sqlGetCoordinates(self, point: str):
@@ -574,3 +578,71 @@ class Controller:
         print("Final distance: " + str(best_route_distance))
         print('best_route = ', from_df)
         return best_route_distance, from_df, coordinates
+    
+
+    def geoSqlClusterNearestNode(self, origin: str, max_pall, max_lbs):
+        self.cur = self.con.cursor()
+        clusters = []
+        discard = set()
+
+        query_str = f"select id_2 from geo_permutations where id_1 = '{origin}' order by distance desc"
+        self.cur.execute(query_str)
+        perm_rows = [row[0] for row in self.cur.fetchall()]
+
+        for current_point in perm_rows:
+            sum_pall = 0
+            sum_lbs = 0
+            if current_point in discard:
+                continue
+
+            sum_pall, sum_lbs = self.getGeoPointVolume(current_point)
+            cluster = [current_point]
+            discard.add(current_point)
+
+            while True:
+                nearest = self.getGeoNearest(current_point, origin, cluster, clusters)
+                if nearest is not None:
+                    pall, lbs = self.getGeoPointVolume(nearest)
+                sum_pall += pall
+                sum_lbs += lbs
+
+                if sum_pall <= max_pall and sum_lbs <= max_lbs and nearest not in discard:
+                    if nearest is not None:
+                        cluster.append(nearest)
+                    discard.add(nearest)
+                    current_point = nearest
+                else:
+                    break
+
+            if cluster:
+                clusters.append(cluster)
+
+        print('total clusters = ', len(clusters))
+        return clusters
+    
+
+    def getGeoPointVolume(self, point_id):
+        query_str = 'select pall_avg, lbs_avg from geo_points where id = ' + "'" + point_id + "'"
+        self.cur.execute(query_str)
+        row = self.cur.fetchone()
+        pall = row[0]
+        lbs = row[1]
+
+        return float(pall), float(lbs)
+
+    def getGeoNearest(self, point_id, origin, cluster, clusters):
+        all_points = cluster + [item for sublist in clusters for item in sublist]
+
+        all_points_set = set(all_points)
+
+        points_str = ', '.join([f"'{item}'" for item in all_points_set])
+
+        query_str = f"select id_2 from geo_permutations where id_1 = '{point_id}' " \
+                    f"and distance = (select min(distance) from geo_permutations " \
+                    f"where id_1 = '{point_id}' and id_2 not in ({points_str}) and id_2 <> '{origin}')"
+
+        self.cur.execute(query_str)
+        row = self.cur.fetchone()
+        nearest = row[0] if row else None
+
+        return nearest

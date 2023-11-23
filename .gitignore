@@ -16,6 +16,8 @@ output/*.json
 *.geojson
 *.gpx
 *.kml
+k_means.py
+ortools_test.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
