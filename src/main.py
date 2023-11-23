@@ -40,6 +40,9 @@ class Main:
         geo_perm_name = 'resize_export'
         folder_perm_dir = 'output'
         dvrp = True
+        origin = 'way/506825578'
+        max_pall = 22
+        max_lbs = 38000
 
         newModel = Model(file_name, points_name, distance_name, n, multiplier, db_name, sql)
         newModel.imgFolder()
@@ -49,9 +52,13 @@ class Main:
         newController = Controller(popSize, elite_size, mutation_rate, generations, plot, sql, con, ants_n, ants_iterations, ants_alpha, ants_beta, ants_evaporation_rate, ants_Q, dvrp)
         # newController.geneticAlgorithm(points, combination_distance, route_output_fix, progress_output_fix, csv_output_fix)
         # _, coordinates = newController.dvrpGeneticAlgorithm(points, route_output_fix, progress_output_fix, csv_output_fix)
-        best_route_distance, _, coordinates = newController.dvrpAntColonyAlgorithm(points, route_output_fix, progress_output_fix, csv_output_fix)
-        r_data = newModel.postGeojsonORSdirections(geojson_output_fix, coordinates, env_var_name='for_chartjs')
-        newModel.sqlInsertPostGeojsonORSdirections(r_data, best_route_distance)
+        # best_route_distance, _, coordinates = newController.dvrpAntColonyAlgorithm(points, route_output_fix, progress_output_fix, csv_output_fix)
+        # r_data = newModel.postGeojsonORSdirections(geojson_output_fix, coordinates, env_var_name='for_chartjs')
+        # newModel.sqlInsertPostGeojsonORSdirections(r_data, best_route_distance)
+
+        clusters = newController.geoSqlClusterNearestNode(origin, max_pall, max_lbs)
+        for item in clusters:
+            print(item)
 
         # print(newModel.countGeoKeys(geo_count_name, folder_count_dir))
         # newModel.permGeo(geo_perm_name, folder_perm_dir)

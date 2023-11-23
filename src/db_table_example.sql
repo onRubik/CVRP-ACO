@@ -70,7 +70,7 @@ CREATE TABLE stage_geo_permutations (
 );
 
 CREATE TABLE geo_points (
-    geo_point              TEXT    PRIMARY KEY
+    id              TEXT    PRIMARY KEY
                                    NOT NULL,
     name                   TEXT,
     coordinates            TEXT    NOT NULL,
