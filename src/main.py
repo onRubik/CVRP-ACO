@@ -56,7 +56,7 @@ class Main:
         # r_data = newModel.postGeojsonORSdirections(geojson_output_fix, coordinates, env_var_name='for_chartjs')
         # newModel.sqlInsertPostGeojsonORSdirections(r_data, best_route_distance)
 
-        clusters = newController.geoSqlClusterNearestNode(origin, max_pall, max_lbs)
+        clusters = newController.geoSqlClusterNearestNode(origin, max_pall, max_lbs, points)
         for item in clusters:
             print(item)
 

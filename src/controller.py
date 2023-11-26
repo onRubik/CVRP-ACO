@@ -490,9 +490,13 @@ class Controller:
         best_route_distance = np.inf
 
         self.cur = self.con.cursor()
-        selected_columns = ['id']
-        geo_points = geo_points[selected_columns].values
-        geo_points = pd.DataFrame(geo_points, columns=selected_columns)
+
+        if not self.from_clusters:
+            selected_columns = ['id']
+            geo_points = geo_points[selected_columns].values
+            geo_points = pd.DataFrame(geo_points, columns=selected_columns)
+        elif self.from_clusters:
+            geo_points = pd.DataFrame(geo_points)
 
         progress = []
 
@@ -580,12 +584,18 @@ class Controller:
         return best_route_distance, from_df, coordinates
     
 
-    def geoSqlClusterNearestNode(self, origin: str, max_pall, max_lbs):
+    def geoSqlClusterNearestNode(self, origin: str, max_pall, max_lbs, points_chosen):
+        selected_columns = ['id']
+        points_chosen = points_chosen[selected_columns].values
+        flatten_chosen = points_chosen.flatten().astype(str)
+        points_chosen_str = ', '.join([f"'{item}'" for item in flatten_chosen])
+
         self.cur = self.con.cursor()
         clusters = []
         discard = set()
 
-        query_str = f"select id_2 from geo_permutations where id_1 = '{origin}' order by distance desc"
+        query_str = f"select id_2 from geo_permutations where id_1 = '{origin}' and id_2 in ({points_chosen_str}) order by distance desc"
+        print(query_str)
         self.cur.execute(query_str)
         perm_rows = [row[0] for row in self.cur.fetchall()]
 
