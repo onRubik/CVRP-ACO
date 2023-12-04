@@ -11,7 +11,7 @@ from math import radians
 
 
 class Controller:
-    def __init__(self, popSize: int, elite_size: int, mutation_rate: float, generations: int, plot: bool, sql: bool, con, ants_n, ants_iterations, ants_alpha, ants_beta, ants_evaporation_rate, ants_Q, dvrp: bool):
+    def __init__(self, popSize: int, elite_size: int, mutation_rate: float, generations: int, plot: bool, sql: bool, con, ants_n, ants_iterations, ants_alpha, ants_beta, ants_evaporation_rate, ants_Q, dvrp: bool, from_clusters: bool):
         self.popSize = popSize
         self.elite_size = elite_size
         self.mutation_rate = mutation_rate
@@ -28,6 +28,7 @@ class Controller:
         self.ants_evaporation_rate = ants_evaporation_rate
         self.ants_Q = ants_Q
         self.dvrp = dvrp
+        self.from_clusters = from_clusters
 
 
     def createRoute(self, points):
@@ -391,11 +392,19 @@ class Controller:
     
 
     def dvrpSqlAntsReturnDistance(self, points_copy, route):
+        # print(type(points_copy))
+        # print(points_copy)]
+        # print(route)
+        if len(points_copy) == 1:
+            segment_distance = 0
+            return segment_distance
         query_str = 'select distance from geo_permutations where id_1 = '+"'"+str(points_copy.loc[route[-2], ['id']].iloc[0])+"'"+' and id_2 = '+"'"+str(points_copy.loc[route[-1], ['id']].iloc[0])+"'"
 
+        # print(query_str)
         for row in self.cur.execute(query_str):
             segment_distance = row[0]
         
+        # print(segment_distance)
         return segment_distance
     
 
@@ -471,7 +480,7 @@ class Controller:
             plt.show()
                 
         print('best_route = ', best_route)
-        return best_route_distance, best_route, coordinates
+        return best_route_distance, df, coordinates
     
 
     def sqlGetCoordinates(self, point: str):
@@ -482,12 +491,17 @@ class Controller:
         return coordinates
     
 
-    def dvrpAntColonyAlgorithm(self, geo_points, route_output_fix, progress_output_fix, csv_output_fix):
+    def dvrpAntColonyAlgorithm(self, geo_points, route_output_fix, progress_output_fix, csv_output_fix, ants_n_override):
         points_len = len(geo_points)
-        points_copy = geo_points.copy()
+        if not self.from_clusters:
+            points_copy = geo_points.copy()
+        elif self.from_clusters:
+            geo_points_list = geo_points
+
         pheromone = np.ones((points_len, points_len))
         best_route = []
         best_route_distance = np.inf
+        self.ants_n = ants_n_override
 
         self.cur = self.con.cursor()
 
@@ -496,7 +510,9 @@ class Controller:
             geo_points = geo_points[selected_columns].values
             geo_points = pd.DataFrame(geo_points, columns=selected_columns)
         elif self.from_clusters:
-            geo_points = pd.DataFrame(geo_points)
+            geo_points = pd.DataFrame(columns=['id'])
+            geo_points['id'] = geo_points_list
+            points_copy = geo_points.copy()
 
         progress = []
 
@@ -516,6 +532,8 @@ class Controller:
                     odds = np.zeros(len(unvisited))
 
                     for i, item in enumerate(unvisited):
+                        print(type(geo_points))
+                        print(geo_points)
                         segment_distance = self.dvrpSqlAntsDistance(geo_points, current_point, item, next_point=False)
 
                         odds[i] = pheromone[current_point, item] ** self.ants_alpha / (segment_distance ** self.ants_beta)
@@ -564,7 +582,8 @@ class Controller:
         df = pd.DataFrame(columns=['x','y'])
         df['x'] = x
         df['y'] = y
-        df.to_csv(csv_output_fix, index=False)
+        if not self.from_clusters:
+            df.to_csv(csv_output_fix, index=False)
 
         if self.plot:
             plt.plot(progress)
@@ -581,7 +600,7 @@ class Controller:
         
         print("Final distance: " + str(best_route_distance))
         print('best_route = ', from_df)
-        return best_route_distance, from_df, coordinates
+        return best_route_distance, df, coordinates
     
 
     def geoSqlClusterNearestNode(self, origin: str, max_pall, max_lbs, points_chosen):
