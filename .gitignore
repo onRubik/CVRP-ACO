@@ -20,6 +20,7 @@ k_means.py
 ortools_test.py
 
 # Byte-compiled / optimized / DLL files
+website/__pycache__/
 __pycache__/
 *.py[cod]
 *$py.class
