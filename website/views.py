@@ -63,25 +63,3 @@ def process_csv(file, processing_function, *args):
         return redirect(url_for('views.home'))
 
     return processing_function(points, *args)
-
-
-# @views.route('/process-cluster', methods=['POST'])
-# @login_required
-# def process_cluster():
-#     file = request.files['file']
-#     clusters = process_csv(file, ClusteringService.cluster_nearest_node)
-#     if clusters is not None:
-#         return redirect(url_for('process_cluster.home'))
-#     else:
-#         return redirect(url_for('views.home'))
-
-
-# @views.route('/process_tsp', methods=['POST'])
-# @login_required
-# def process_tsp():
-#     file = request.files['file']
-#     tsp_result = process_csv(file, tsp_algorithm)
-#     if tsp_result is not None:
-#         return render_template('tsp_result.html', tsp_result=tsp_result)
-#     else:
-#         return redirect(url_for('views.home'))
