@@ -5,6 +5,7 @@ from .tsp import TspService
 from .load_points import load_points  
 from .vrp import vrp  
 import pandas as pd
+from .models import DVRPSet, DVRPOrigin
 
 
 views = Blueprint('views', __name__)
@@ -39,6 +40,11 @@ def home():
                 return render_template('vrp_result.html', vrp_result=vrp_result)
             else:
                 flash('Error processing VRP', category='error')
+
+    dvrp_sets = DVRPSet.query.all()
+    print(dvrp_sets)
+    dvrp_origins = DVRPOrigin.query.all()
+    print(dvrp_origins)
 
     return render_template('home.html', user=current_user)
 
