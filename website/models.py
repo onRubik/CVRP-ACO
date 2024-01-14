@@ -1,6 +1,7 @@
-from . import db
 from flask_login import UserMixin
-from sqlalchemy.sql import func
+from flask_sqlalchemy import SQLAlchemy
+
+db = SQLAlchemy()
 
 
 class User(db.Model, UserMixin):
@@ -85,28 +86,18 @@ class StageGeoPoints(db.Model):
 class DVRPSet(db.Model):
     __tablename__ = 'dvrp_set'
 
-    dvrp_id = db.Column(db.Text, primary_key=True, nullable=False)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    dvrp_id = db.Column(db.Text, nullable=False)
     cluster_id = db.Column(db.Integer, nullable=False)
     cluster_name = db.Column(db.Text, nullable=False)
     point = db.Column(db.Text, nullable=False)
-
-    # Define the relationship with DVRPOrigin with cascade options
-    origins = db.relationship('DVRPOrigin', backref='dvrp_set', cascade='all, delete-orphan', single_parent=True)
-
-    def __init__(self, dvrp_id, cluster_id, cluster_name, point):
-        self.dvrp_id = dvrp_id
-        self.cluster_id = cluster_id
-        self.cluster_name = cluster_name
-        self.point = point
 
 class DVRPOrigin(db.Model):
     __tablename__ = 'dvrp_origin'
 
     dvrp_id = db.Column(db.Text, primary_key=True, nullable=False)
     dvrp_origin = db.Column(db.Text, nullable=False)
-    dvrp_set_id = db.Column(db.Text, db.ForeignKey('dvrp_set.dvrp_id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
 
-    def __init__(self, dvrp_id, dvrp_origin, dvrp_set_id):
+    def __init__(self, dvrp_id, dvrp_origin):
         self.dvrp_id = dvrp_id
         self.dvrp_origin = dvrp_origin
-        self.dvrp_set_id = dvrp_set_id

@@ -6,66 +6,47 @@ from .load_points import load_points
 from .vrp import vrp  
 import pandas as pd
 from .models import DVRPSet, DVRPOrigin
+from . import db
+# from werkzeug.utils import secure_filename
+# from datetime import datetime
 
 
 views = Blueprint('views', __name__)
+ALLOWED_EXTENSIONS = set(['csv'])
 
 
 @views.route('/', methods=['GET', 'POST'])
 @login_required
 def home():
-    if request.method == 'POST':
+    if request.method =='POST':
         file = request.files['file']
-        origin = request.form['origin']
-        max_pallets = int(request.form['max_pallets'])
-        max_pounds = float(request.form['max_pounds'])
+        if file and allowed_file(file.filename):
+            try:
+                df = pd.read_csv(file, header=None)
 
-        if 'process_cluster' in request.form:
-            clusters = process_csv(file, ClusteringService.cluster_nearest_node, origin, max_pallets, max_pounds)
-            if clusters is not None:
-                return render_template('cluster_result.html', clusters=clusters)
-            else:
-                flash('Error processing clustering', category='error')
+                for index, row in df.iterrows():
+                    dvrp_set = DVRPSet(
+                        dvrp_id=row[0],
+                        cluster_id=int(row[1]),
+                        cluster_name=row[2],
+                        point=row[3]
+                    )
+                    db.session.add(dvrp_set)
 
-        elif 'process_tsp' in request.form:
-            tsp_result = process_csv(file, TspService.tsp_service, origin, max_pallets, max_pounds)
-            if tsp_result is not None:
-                return render_template('tsp_result.html', tsp_result=tsp_result)
-            else:
-                flash('Error processing TSP', category='error')
+                db.session.commit()
+                flash('File uploaded successfully', 'success')
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Error uploading file: {str(e)}', 'error')
 
-        elif 'process_vrp' in request.form:
-            vrp_result = process_csv(file, vrp, origin, max_pallets, max_pounds)
-            if vrp_result is not None:
-                return render_template('vrp_result.html', vrp_result=vrp_result)
-            else:
-                flash('Error processing VRP', category='error')
+    dvrp_sets = db.session.query(
+        DVRPOrigin.dvrp_id, DVRPOrigin.dvrp_origin, DVRPSet.point
+    ).join(
+        DVRPSet, DVRPOrigin.dvrp_id == DVRPSet.dvrp_id
+    ).distinct().all()
 
-    dvrp_sets = DVRPSet.query.all()
-    print(dvrp_sets)
-    dvrp_origins = DVRPOrigin.query.all()
-    print(dvrp_origins)
-
-    return render_template('home.html', user=current_user)
+    return render_template('home.html', user=current_user, dvrp_sets=dvrp_sets)
 
 
-def process_csv(file, processing_function, *args):
-    if file.filename == '':
-        return redirect(url_for('views.home'))
-    try:
-        df = pd.read_csv(file)
-    except pd.errors.EmptyDataError:
-        flash('Empty CSV file', category='error')
-        return redirect(url_for('views.home'))
-    except pd.errors.ParserError:
-        flash('Invalid CSV file', category='error')
-        return redirect(url_for('views.home'))
-
-    if 'id' in df.columns:
-        selected_columns = ['id']
-        points = df[selected_columns].values.tolist()
-    else:
-        flash('CSV file must contain an "id" column', category='error')
-        return redirect(url_for('views.home'))
-
-    return processing_function(points, *args)
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
