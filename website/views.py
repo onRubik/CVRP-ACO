@@ -23,6 +23,13 @@ def home():
         if file and allowed_file(file.filename):
             try:
                 df = pd.read_csv(file, header=None)
+                dist_v = df[0].unique()
+                dist_db_v = db.session.query(DVRPSet.dvrp_id).distinct().all()
+                print(dist_db_v)
+                dist_db_v = [i[0] for i in dist_db_v]
+                if dist_v in dist_db_v:
+                    flash('dvrp_id exists in dvrp_set table', 'error')
+                    return redirect(url_for('views.home'))
 
                 for index, row in df.iterrows():
                     dvrp_set = DVRPSet(
