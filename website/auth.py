@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify
 from .models import User
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
@@ -16,14 +16,16 @@ def login():
         user = User.query.filter_by(email=email).first()
         if user:
             if check_password_hash(user.password, password):
-                flash('Logged in successfully!', category='success')
+                message = 'Logged in successfully!'
                 login_user(user, remember=True)
-                return redirect(url_for('views.home'))
+                return jsonify({'message': message, 'type': 'success'})
             else:
-                flash('Incorrect password, try again.', category='error')
+                message = 'Incorrect password, try again.'
+                return jsonify({'message': message, 'type': 'error'})
         else:
-            flash('Email does not exist.', category='error')
-
+            message = 'Email does not exist.'
+            return jsonify({'message': message, 'type': 'error'})
+    
     return render_template("login.html", user=current_user)
 
 
@@ -44,19 +46,24 @@ def sign_up():
 
         user = User.query.filter_by(email=email).first()
         if user:
-            flash('Email already exists.', category='error')
+            # flash('Email already exists.', category='error')
+            print('Email already exists.')
             return redirect(url_for('auth.sign_up'))
         elif len(email) < 4:
-            flash('Email must be greater than 3 characters.', category='error')
+            # flash('Email must be greater than 3 characters.', category='error')
+            print('Email must be greater than 3 characters.')
             return redirect(url_for('auth.sign_up'))
         elif len(first_name) < 2:
-            flash('First name must be greater than 1 character.', category='error')
+            # flash('First name must be greater than 1 character.', category='error')
+            print('First name must be greater than 1 character.')
             return redirect(url_for('auth.sign_up'))
         elif password1 != password2:
-            flash('Passwords don\'t match.', category='error')
+            # flash('Passwords don\'t match.', category='error')
+            print('Passwords don\'t match.')
             return redirect(url_for('auth.sign_up'))
         elif len(password1) < 7:
-            flash('Password must be at least 7 characters.', category='error')
+            # flash('Password must be at least 7 characters.', category='error')
+            print('Password must be at least 7 characters.')
             return redirect(url_for('auth.sign_up'))
         else:
             new_user = User(email=email, first_name=first_name, password=generate_password_hash(
@@ -64,7 +71,8 @@ def sign_up():
             db.session.add(new_user)
             db.session.commit()
             login_user(new_user, remember=True)
-            flash('Account created!', category='success')
+            # flash('Account created!', category='success')
+            print('Account created!')
             return redirect(url_for('views.home'))
 
     return render_template("sign_up.html", user=current_user)
