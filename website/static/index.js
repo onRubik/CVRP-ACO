@@ -1,34 +1,48 @@
-const alertTrigger = document.getElementById('liveAlertBtn');
+document.addEventListener('DOMContentLoaded', () => {
+  const alertTrigger = document.getElementById('liveAlertBtn');
 
-if (alertTrigger) {
-  alertTrigger.addEventListener('click', async () => {
-    const email = document.getElementById('floatingInput').value;
-    const password = document.getElementById('floatingPassword').value;
-    const response = await fetch('/login', {
-      method: 'POST',
-      body: new URLSearchParams({ 'floatingInput': email, 'floatingPassword': password }),
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
-    });
+  if (alertTrigger) {
+    alertTrigger.addEventListener('click', async () => {
+      const email = document.getElementById('floatingInput').value;
+      const password = document.getElementById('floatingPassword').value;
 
-    if (response.ok) {
-      try {
-        const result = await response.json();
-        if (result.message && result.type) {
-          alert(result.message);
-          if (result.type === 'success') {
-            // Redirect to the home page or perform other actions on success.
-            window.location.href = '/home'; // Change to the appropriate URL.
+      if (email !== '' && password !== '') {
+        const response = await fetch('/login', {
+          method: 'POST',
+          body: new URLSearchParams({ 'floatingInput': email, 'floatingPassword': password }),
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          }
+        });
+
+        if (response.ok) {
+          try {
+            const result = await response.json();
+            if (result.message && result.type) {
+              alert(result.message);
+              window.location.href = '/login';
+              if (result.type === 'success') {
+                window.location.href = '/home';
+              }
+            } else {
+              alert('Invalid response from the server.');
+            }
+          } catch (error) {
+            alert('Error processing response.');
           }
         } else {
-          alert('Invalid response from the server.');
+          alert('Failed to log in');
         }
-      } catch (error) {
-        alert('Error processing response.');
+      } else {
+        alert('Please fill in both email and password fields.');
       }
-    } else {
-      alert('Failed to log in');
-    }
-  });
+    });
+  }
+});
+
+// You can check and use the errorMessage variable here if needed
+if (typeof errorMessage !== 'undefined' && errorMessage !== null) {
+  alert(errorMessage);
+  // You can redirect as needed here
+  // window.location.href = '/desired_location';
 }

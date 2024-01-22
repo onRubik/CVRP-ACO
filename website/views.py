@@ -1,4 +1,4 @@
-from flask import render_template, request, redirect, url_for, Blueprint, flash
+from flask import render_template, request, redirect, url_for, Blueprint, jsonify
 from flask_login import login_required, current_user
 from .clustering import ClusteringService
 from .tsp import TspService
@@ -15,7 +15,7 @@ views = Blueprint('views', __name__)
 ALLOWED_EXTENSIONS = set(['csv'])
 
 
-@views.route('/', methods=['GET', 'POST'])
+@views.route('/home', methods=['GET', 'POST'])
 @login_required
 def home():
     if request.method =='POST':
@@ -28,8 +28,8 @@ def home():
                 print(dist_db_v)
                 dist_db_v = [i[0] for i in dist_db_v]
                 if dist_v in dist_db_v:
-                    flash('dvrp_id exists in dvrp_set table', 'error')
-                    return redirect(url_for('views.home'))
+                    error_message = 'dvrp_id exists in dvrp_set table'
+                    return jsonify({'message': error_message, 'type': 'error'})
 
                 for index, row in df.iterrows():
                     dvrp_set = DVRPSet(
@@ -41,10 +41,10 @@ def home():
                     db.session.add(dvrp_set)
 
                 db.session.commit()
-                flash('File uploaded successfully', 'success')
+                # flash('File uploaded successfully', 'success')
             except Exception as e:
                 db.session.rollback()
-                flash(f'Error uploading file: {str(e)}', 'error')
+                # flash(f'Error uploading file: {str(e)}', 'error')
 
     dvrp_sets = db.session.query(
         DVRPOrigin.dvrp_id, DVRPOrigin.dvrp_origin, DVRPSet.point

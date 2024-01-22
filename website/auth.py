@@ -14,7 +14,7 @@ def login():
         password = request.form.get('floatingPassword')
 
         user = User.query.filter_by(email=email).first()
-        if user:
+        if user and email != '' and password != '':
             if check_password_hash(user.password, password):
                 message = 'Logged in successfully!'
                 login_user(user, remember=True)
@@ -22,7 +22,7 @@ def login():
             else:
                 message = 'Incorrect password, try again.'
                 return jsonify({'message': message, 'type': 'error'})
-        else:
+        elif email != '' and password != '':
             message = 'Email does not exist.'
             return jsonify({'message': message, 'type': 'error'})
     
