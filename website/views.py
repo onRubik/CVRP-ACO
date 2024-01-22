@@ -1,5 +1,4 @@
 from flask import render_template, request, redirect, url_for, Blueprint, jsonify
-from flask_login import login_required, current_user
 from .clustering import ClusteringService
 from .tsp import TspService
 from .load_points import load_points  
@@ -7,16 +6,13 @@ from .vrp import vrp
 import pandas as pd
 from .models import DVRPSet, DVRPOrigin
 from . import db
-# from werkzeug.utils import secure_filename
-# from datetime import datetime
 
 
 views = Blueprint('views', __name__)
 ALLOWED_EXTENSIONS = set(['csv'])
 
 
-@views.route('/home', methods=['GET', 'POST'])
-@login_required
+@views.route('/', methods=['GET', 'POST'])
 def home():
     if request.method =='POST':
         file = request.files['file']
@@ -52,7 +48,7 @@ def home():
         DVRPSet, DVRPOrigin.dvrp_id == DVRPSet.dvrp_id
     ).distinct().all()
 
-    return render_template('home.html', user=current_user, dvrp_sets=dvrp_sets)
+    return render_template('home.html', dvrp_sets=dvrp_sets)
 
 
 def allowed_file(filename):
