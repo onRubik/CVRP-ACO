@@ -1,4 +1,4 @@
-from flask import render_template, request, redirect, url_for, Blueprint, jsonify
+from flask import render_template, request, redirect, url_for, Blueprint, jsonify, flash
 from .clustering import ClusteringService
 from .tsp import TspService
 from .load_points import load_points  
@@ -25,7 +25,8 @@ def home():
                 dist_db_v = [i[0] for i in dist_db_v]
                 if dist_v in dist_db_v:
                     error_message = 'dvrp_id exists in dvrp_set table'
-                    return jsonify({'message': error_message, 'type': 'error'})
+                    # I want to use a javascript alert() message
+                    flash(error_message, 'error')
 
                 for index, row in df.iterrows():
                     dvrp_set = DVRPSet(
@@ -37,10 +38,10 @@ def home():
                     db.session.add(dvrp_set)
 
                 db.session.commit()
-                # flash('File uploaded successfully', 'success')
+                # I want to use a javascript confirm() fumction
             except Exception as e:
                 db.session.rollback()
-                # flash(f'Error uploading file: {str(e)}', 'error')
+                # I want to use a javascript alert() message
 
     dvrp_sets = db.session.query(
         DVRPOrigin.dvrp_id, DVRPOrigin.dvrp_origin, DVRPSet.point
