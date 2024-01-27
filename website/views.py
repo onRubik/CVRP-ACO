@@ -25,23 +25,20 @@ def home():
                 dist_db_v = [i[0] for i in dist_db_v]
                 if dist_v in dist_db_v:
                     error_message = 'dvrp_id exists in dvrp_set table'
-                    # I want to use a javascript alert() message
                     flash(error_message, 'error')
+                else:
+                    for index, row in df.iterrows():
+                        dvrp_set = DVRPSet(
+                            dvrp_id=row[0],
+                            cluster_id=int(row[1]),
+                            cluster_name=row[2],
+                            point=row[3]
+                        )
+                        db.session.add(dvrp_set)
 
-                for index, row in df.iterrows():
-                    dvrp_set = DVRPSet(
-                        dvrp_id=row[0],
-                        cluster_id=int(row[1]),
-                        cluster_name=row[2],
-                        point=row[3]
-                    )
-                    db.session.add(dvrp_set)
-
-                db.session.commit()
-                # I want to use a javascript confirm() fumction
+                    db.session.commit()
             except Exception as e:
                 db.session.rollback()
-                # I want to use a javascript alert() message
 
     dvrp_sets = db.session.query(
         DVRPOrigin.dvrp_id, DVRPOrigin.dvrp_origin, DVRPSet.point

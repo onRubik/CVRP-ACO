@@ -1,8 +1,5 @@
 from flask import Flask
-# from flask_sqlalchemy import SQLAlchemy
-# from sqlalchemy import event
 from os import path
-# from .models import db, DVRPSet
 from .models import db
 
 
@@ -18,8 +15,6 @@ def create_app():
     from .views import views
 
     app.register_blueprint(views, url_prefix='/')
-
-    # from .models import GeoPermutations, GeoPoints, ORSCallLog, ORSDirectionsGeoJSONPost, StageGeoPermutations, StageGeoPoints
 
     create_database(app)
 

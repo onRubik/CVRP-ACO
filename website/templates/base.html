@@ -23,11 +23,36 @@
     
     {% block content %}
     {% endblock %}   
-
     
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+        flashMessages = {{ messages | tojson | safe }};
+        <script>
+          var flashMessages = flashMessages;
+          console.log(flashMessages)
+          function displayFlashMessage() {
+            if (flashMessages && flashMessages.length > 0) {
+                flashMessages.forEach(function (message) {
+                    var category = message[0];
+                    var content = message[1];
+
+                    alert(content);
+                });
+            }
+          }
+
+          displayFlashMessage();
+          
+        </script>
+    {% endif %}
+    {% endwith %}
+
     <script
-    type="text/javascript"
-    src="{{ url_for('static', filename='index.js') }}"
+        type="text/javascript"
+        src="{{ url_for('static', filename='index.js') }}"
     ></script>
+  
+  {% block footer %}
+  {% endblock %}
   </body>
 </html>
