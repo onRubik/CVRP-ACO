@@ -20,30 +20,16 @@
   </head>
   <body {% block body_class %}{% endblock %}>
 
-    
     {% block content %}
     {% endblock %}   
     
-    {% with messages = get_flashed_messages() %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
-        flashMessages = {{ messages | tojson | safe }};
-        <script>
-          var flashMessages = flashMessages;
-          console.log(flashMessages)
-          function displayFlashMessage() {
-            if (flashMessages && flashMessages.length > 0) {
-                flashMessages.forEach(function (message) {
-                    var category = message[0];
-                    var content = message[1];
-
-                    alert(content);
-                });
-            }
-          }
-
-          displayFlashMessage();
-          
-        </script>
+      <div id="hiddenElement" style="display: none;">
+        {% for category, message in messages %}
+          <div class="flash-message" data-category="{{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
     {% endif %}
     {% endwith %}
 
