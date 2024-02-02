@@ -14,11 +14,7 @@ ALLOWED_EXTENSIONS = set(['csv'])
 
 @views.route('/', methods=['GET', 'POST'])
 def home():
-    print(request.method)
-    post_request = session.get('message_displayed', False)
-    print(post_request)
-
-    if request.method =='POST' and post_request==False:
+    if request.method =='POST':
         file = request.files['file']
         if file and allowed_file(file.filename):
             try:
@@ -27,11 +23,9 @@ def home():
                 dist_db_v = db.session.query(DVRPSet.dvrp_id).distinct().all()
                 dist_db_v = [i[0] for i in dist_db_v]
                 if dist_v in dist_db_v:
-                    print('it went in')
+                    # print('it went in')
                     message = 'dvrp_id exists in dvrp_set table'
                     flash(message, category='error')
-                    session['post_request']=True
-                    print(session)
                 else:
                     for index, row in df.iterrows():
                         dvrp_set = DVRPSet(
@@ -41,11 +35,22 @@ def home():
                             point=row[3]
                         )
                         db.session.add(dvrp_set)
+                    db.session.commit()
+
+                    dist_v_arr = [x for x in dist_v]
+                    origin_arr = ['DC10' for x in dist_v]
+                    print(dist_v_arr)
+                    print(origin_arr)
+
+                    dvrp_origin = DVRPOrigin(
+                        dvrp_id=dist_v_arr,
+                        dvrp_origin=origin_arr
+                    )
+                    db.session.add(dvrp_origin)
 
                     db.session.commit()
                     message = 'set added to dvrp_set table'
                     flash(message, category='success')
-                    session.pop('post_request', None)
             except Exception as e:
                 db.session.rollback()
 
