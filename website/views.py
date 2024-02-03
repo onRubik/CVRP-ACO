@@ -23,7 +23,6 @@ def home():
                 dist_db_v = db.session.query(DVRPSet.dvrp_id).distinct().all()
                 dist_db_v = [i[0] for i in dist_db_v]
                 if dist_v in dist_db_v:
-                    # print('it went in')
                     message = 'dvrp_id exists in dvrp_set table'
                     flash(message, category='error')
                 else:
@@ -35,18 +34,15 @@ def home():
                             point=row[3]
                         )
                         db.session.add(dvrp_set)
-                    db.session.commit()
 
                     dist_v_arr = [x for x in dist_v]
                     origin_arr = ['DC10' for x in dist_v]
-                    print(dist_v_arr)
-                    print(origin_arr)
-
-                    dvrp_origin = DVRPOrigin(
-                        dvrp_id=dist_v_arr,
-                        dvrp_origin=origin_arr
-                    )
-                    db.session.add(dvrp_origin)
+                    for dvrp_id, dvrp_origin in zip(dist_v_arr, origin_arr):
+                        dvrp_origin_entry = DVRPOrigin(
+                            dvrp_id=dvrp_id,
+                            dvrp_origin=dvrp_origin
+                        )
+                        db.session.add(dvrp_origin_entry)
 
                     db.session.commit()
                     message = 'set added to dvrp_set table'
