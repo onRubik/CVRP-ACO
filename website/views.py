@@ -4,6 +4,11 @@ from .tsp import TspService
 from .load_points import load_points  
 from .vrp import vrp  
 import pandas as pd
+import json
+import plotly
+import plotly.express as px
+import plotly.graph_objects as go
+from plotly.graph_objects import Table
 from .models import DVRPSet, DVRPOrigin
 from . import db
 
@@ -51,12 +56,34 @@ def home():
                 db.session.rollback()
 
     dvrp_sets = db.session.query(
-        DVRPOrigin.dvrp_id, DVRPOrigin.dvrp_origin, DVRPSet.point
+        DVRPOrigin.dvrp_id, DVRPOrigin.dvrp_origin
     ).join(
         DVRPSet, DVRPOrigin.dvrp_id == DVRPSet.dvrp_id
     ).distinct().all()
 
-    return render_template('home.html', dvrp_sets=dvrp_sets)
+    dvrp_set_all = db.session.query(DVRPSet).all()
+    dvrp_set_all_data = [
+        {column.name: getattr(row, column.name) for column in row.__table__.columns} 
+        for row in dvrp_set_all
+    ]
+    df_dvrp_set_all = pd.DataFrame(dvrp_set_all_data)
+
+    fig_dvrp_set_all = go.Figure(data=[go.Table(
+        header=dict(
+            values=list(df_dvrp_set_all.columns),
+            fill_color='paleturquoise',
+            align='left'
+        ),
+        cells=dict(
+            values=[df_dvrp_set_all[col].tolist() for col in df_dvrp_set_all.columns],
+            fill_color='lavender',
+            align='left'
+        )
+    )])
+
+    fig_json_dvrp_set_all = json.dumps(fig_dvrp_set_all, cls=plotly.utils.PlotlyJSONEncoder)
+
+    return render_template('home.html', dvrp_sets=dvrp_sets, fig_json_dvrp_set_all=fig_json_dvrp_set_all)
 
 
 def allowed_file(filename):

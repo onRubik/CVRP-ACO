@@ -1,13 +1,13 @@
-{% extends "base.html" %} 
-{% block title %}Home{% endblock %}
-{% block additional_head %}
+{% extends "base.html" %}
 
+{% block title %}Home{% endblock %}
+
+{% block additional_head %}
 <style>
     .navbar-nav .nav-link#logout {
         padding-right: 20px;
         padding-left: 20px;
     }
-
     .btn-toggle {
         padding: .25rem .5rem;
         font-weight: 600;
@@ -19,7 +19,6 @@
         color: rgba(var(--bs-emphasis-color-rgb), .85);
         background-color: var(--bs-tertiary-bg);
     }
-
     .btn-toggle::before {
         width: 1.25em;
         line-height: 0;
@@ -27,18 +26,15 @@
         transition: transform .35s ease;
         transform-origin: .5em 50%;
     }
-
     [data-bs-theme="dark"] .btn-toggle::before {
         content: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='rgba%28255,255,255,.5%29' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M5 14l6-6-6-6'/%3e%3c/svg%3e");
     }
-
     .btn-toggle[aria-expanded="true"] {
         color: rgba(var(--bs-emphasis-color-rgb), .85);
     }
     .btn-toggle[aria-expanded="true"]::before {
         transform: rotate(90deg);
     }
-
     .btn-toggle-nav a {
         padding: .1875rem .5rem;
         margin-top: .125rem;
@@ -49,53 +45,61 @@
         background-color: var(--bs-tertiary-bg);
     }
 </style>
-
 {% endblock %}
-{% block content %}
 
+{% block content %}
 <nav class="navbar navbar-expand-lg">
-  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar">
-      <span class="navbar-toggler-icon"></span>
-  </button>
-  <div class="collapse navbar-collapse" id="navbar">
-      <div class="navbar-nav">
-          <div class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" id="fileMenu" role="button" data-bs-toggle="dropdown">
-                  File
-              </a>
-              <ul class="dropdown-menu" aria-labelledby="fileMenu">
-                  <li>
-                    <form method="POST" action="/" enctype="multipart/form-data">
-                      <a>New DVRP set</a>
-                      <input type="file" name="file">
-                      <button id="liveAlertBtn">Submit</button>
-                    </form>
-                  </li>
-              </ul>
-          </div>
-      </div>
-  </div>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbar">
+        <div class="navbar-nav">
+            <div class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="fileMenu" role="button" data-bs-toggle="dropdown">
+                    File
+                </a>
+                <ul class="dropdown-menu" aria-labelledby="fileMenu">
+                    <li>
+                      <form method="POST" action="/" enctype="multipart/form-data">
+                        <a>New DVRP set</a>
+                        <input type="file" name="file">
+                        <button id="liveAlertBtn">Submit</button>
+                      </form>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
 </nav>
 
-<div class="flex-shrink-0 p-3" style="width: 280px;">
-  <ul class="list-unstyled ps-0">
-    <li class="mb-1">
-      <button class="btn btn-toggle d-inline-flex align-items-center rounded border-0 collapsed" data-bs-toggle="collapse" data-bs-target="#home-collapse" aria-expanded="false">
-        DVRP sets
-      </button>
-      <div class="collapse" id="home-collapse">
-        <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
-          {% for dvrp_set in dvrp_sets %}
-          <li>
-            <a href="#" class="link-body-emphasis d-inline-flex text-decoration-none rounded">
-              [{{ dvrp_set[0] }}, {{ dvrp_set[1] }}]
-            </a>
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-3">
+      <div class="flex-shrink-0 p-3" style="width: 280px;">
+        <ul class="list-unstyled ps-0">
+          <li class="mb-1">
+            <button class="btn btn-toggle d-inline-flex align-items-center rounded border-0 collapsed" data-bs-toggle="collapse" data-bs-target="#home-collapse" aria-expanded="false">
+              DVRP sets
+            </button>
+            <div class="collapse" id="home-collapse">
+              <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+                {% for dvrp_set in dvrp_sets %}
+                <li>
+                  <a href="#" class="link-body-emphasis d-inline-flex text-decoration-none rounded">
+                    [{{ dvrp_set[0] }}, {{ dvrp_set[1] }}]
+                  </a>
+                </li>
+                {% endfor %}
+              </ul>
+            </div>
           </li>
-          {% endfor %}
         </ul>
       </div>
-    </li>
-  </ul>
+    </div>
+    <div class="col-md-9">
+      <div id="plotly-table" style="padding: 20px;" data-fig="{{ fig_json_dvrp_set_all|tojson|safe }}"></div>
+    </div>
+  </div>
 </div>
 
 {% endblock %}
