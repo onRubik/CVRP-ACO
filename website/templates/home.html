@@ -96,10 +96,11 @@
         </ul>
       </div>
     </div>
-    <div class="col-md-9">
-      <div id="plotly-table" style="padding: 20px;" data-fig="{{ fig_json_dvrp_set_all|tojson|safe }}"></div>
-    </div>
   </div>
+</div>
+
+<div class="plotly-table-container">
+  <div id="plotly-table" style="padding: 20px;"></div>
 </div>
 
 {% endblock %}

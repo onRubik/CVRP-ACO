@@ -15,20 +15,33 @@ function displayFlashMessages() {
 displayFlashMessages();
 
 document.addEventListener('DOMContentLoaded', function() {
-    var plotlyTableDiv = document.getElementById('plotly-table');
-    var rawData = plotlyTableDiv.getAttribute('data-fig');
-    console.log(rawData);
-
-    if (rawData) {
-        try {
-            var figData = JSON.parse(rawData);
-            Plotly.newPlot('plotly-table', figData.data, figData.layout);
-        } catch (error) {
-            console.error("Parsing error:", error, "Raw data:", rawData);
-        }
-    } else {
-        console.error("No data found for Plotly table.");
-    }
+    fetch('/plot-table')
+    .then(response => response.json())
+    .then(data => {
+        console.log('Plot data:', data['data']);
+        Plotly.newPlot('plotly-table', data['data'], data['layout']);
+        // var data = [{
+        //     type: 'table',
+        //     header: {
+        //       values: [["Column A"], ["Column B"]],
+        //       align: "center",
+        //       line: {width: 1, color: 'black'},
+        //       fill: {color: "grey"},
+        //       font: {family: "Arial", size: 12, color: "white"}
+        //     },
+        //     cells: {
+        //       values: [
+        //         ["A1", "A2"], // Column A values
+        //         ["B1", "B2"], // Column B values
+        //       ],
+        //       align: "center",
+        //       line: {color: "black", width: 1},
+        //       fill: {color: ["yellow", "white"]},
+        //       font: {family: "Arial", size: 11, color: ["black"]}
+        //     }
+        //   }];
+          
+        //   Plotly.newPlot('plotly-table', data);
+    })
+    .catch(error => console.error('Error loading plot data:', error));
 });
-
-

@@ -14,8 +14,42 @@
     crossorigin="anonymous"
     referrerpolicy="no-referrer"
     ></script>
-    <script src="https://cdn.jsdelivr.net/npm/plotly@1.0.6/index.min.js"
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"
     ></script>
+
+    <style>
+      html, body {
+          height: 100%;
+          margin: 0;
+          padding: 0;
+      }
+
+      body {
+          display: flex;
+          flex-direction: column;
+      }
+
+      .content-container {
+          flex-grow: 1;
+          display: flex;
+          flex-direction: column;
+      }
+
+      .plotly-table-container {
+          display: flex;
+          justify-content: center;
+          padding: 20px;
+      }
+
+
+      #plotly-table {
+          flex-grow: 1;
+          min-height: 0;
+          width: 90%;
+          min-height: 500px;
+      }
+
+    </style>
 
     {% block additional_head %}
     {% endblock %}

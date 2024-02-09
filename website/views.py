@@ -61,6 +61,11 @@ def home():
         DVRPSet, DVRPOrigin.dvrp_id == DVRPSet.dvrp_id
     ).distinct().all()
 
+    return render_template('home.html', dvrp_sets=dvrp_sets)
+
+
+@views.route('/plot-table')
+def plot_table():
     dvrp_set_all = db.session.query(DVRPSet).all()
     dvrp_set_all_data = [
         {column.name: getattr(row, column.name) for column in row.__table__.columns} 
@@ -81,9 +86,7 @@ def home():
         )
     )])
 
-    fig_json_dvrp_set_all = json.dumps(fig_dvrp_set_all, cls=plotly.utils.PlotlyJSONEncoder)
-
-    return render_template('home.html', dvrp_sets=dvrp_sets, fig_json_dvrp_set_all=fig_json_dvrp_set_all)
+    return jsonify(fig_dvrp_set_all.to_dict())
 
 
 def allowed_file(filename):
