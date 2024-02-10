@@ -44,6 +44,20 @@
     .btn-toggle-nav a:focus {
         background-color: var(--bs-tertiary-bg);
     }
+    .plotly-table-container {
+        display: flex;
+        justify-content: left;
+        padding: 2px;
+    }
+      #plotly-table {
+        flex-grow: 1;
+        width: 100%;
+        min-height: 500px;
+    }
+    #plotly-map-container {
+        height: 500px;
+        width: 100%;
+    }
 </style>
 {% endblock %}
 
@@ -74,8 +88,8 @@
 
 <div class="container-fluid">
   <div class="row">
-    <div class="col-md-3">
-      <div class="flex-shrink-0 p-3" style="width: 280px;">
+    <div class="col-md-auto">
+      <div class="flex-shrink-0 p-2" style="width: 200px;">
         <ul class="list-unstyled ps-0">
           <li class="mb-1">
             <button class="btn btn-toggle d-inline-flex align-items-center rounded border-0 collapsed" data-bs-toggle="collapse" data-bs-target="#home-collapse" aria-expanded="false">
@@ -96,11 +110,15 @@
         </ul>
       </div>
     </div>
+    <div class="col-md-9">
+      <div id="plotly-map-container">
+        {{ map_html|safe }}
+      </div>
+      <div class="plotly-map-container">
+        <div id="plotly-map-container"></div>
+      </div>
+    </div>
   </div>
-</div>
-
-<div class="plotly-table-container">
-  <div id="plotly-table" style="padding: 20px;"></div>
 </div>
 
 {% endblock %}

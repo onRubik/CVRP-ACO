@@ -64,6 +64,10 @@ def home():
     return render_template('home.html', dvrp_sets=dvrp_sets)
 
 
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
 @views.route('/plot-table')
 def plot_table():
     dvrp_set_all = db.session.query(DVRPSet).all()
@@ -89,5 +93,17 @@ def plot_table():
     return jsonify(fig_dvrp_set_all.to_dict())
 
 
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+@views.route('/map-data')
+def map_data():
+    # Sample data for route plotting
+    df = pd.DataFrame({
+        'Lat': [40.730610, 40.751990],
+        'Lon': [-73.935242, -73.969262],
+        'Order': [1, 2]
+    })
+
+    fig = px.line_mapbox(df, lat='Lat', lon='Lon', line_group='Order', 
+                         mapbox_style="open-street-map", zoom=10)
+
+    # Serialize and return the figure in a JSON-compatible format
+    return jsonify(fig=fig.to_json())
