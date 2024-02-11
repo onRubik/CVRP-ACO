@@ -90,6 +90,10 @@ def plot_table():
         )
     )])
 
+    fig_dvrp_set_all.update_layout(
+        margin=dict(l=10, r=18, t=28, b=10)
+    )
+
     return jsonify(fig_dvrp_set_all.to_dict())
 
 
@@ -104,6 +108,9 @@ def map_data():
 
     fig = px.line_mapbox(df, lat='Lat', lon='Lon', line_group='Order', 
                          mapbox_style="open-street-map", zoom=10)
+    
+    fig.update_layout(
+        margin=dict(l=0, r=0, t=0, b=0)
+    )
 
-    # Serialize and return the figure in a JSON-compatible format
     return jsonify(fig=fig.to_json())
