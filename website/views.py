@@ -109,6 +109,10 @@ def map_data():
     fig = px.line_mapbox(df, lat='Lat', lon='Lon', line_group='Order', 
                          mapbox_style="open-street-map", zoom=10)
     
+    # Add scatter plot on the same figure for the points
+    fig.add_trace(px.scatter_mapbox(df, lat='Lat', lon='Lon', size=[1]*len(df)).data[0])
+
+    
     fig.update_layout(
         margin=dict(l=0, r=0, t=0, b=0)
     )

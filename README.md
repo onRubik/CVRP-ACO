@@ -49,7 +49,7 @@ out center;
 Then you can use the *reSizeGeoPoints()* and *countGeoKeys()* in model.py functions to resize the result and verify its size.
 
 Functions getGeoORSRateLimit() & sqlGeoORSDistances() uses https://openrouteservice.org/ API to get the distance between permutations of the points. You will need to set your api key as an environment variable like:
->export MY_VARIABLE="your api key"
+>export ORS_API_KEY="your api key"
 
 Currently sqlGeoORSDistances() is meant to use the openrouteservice free token so it's fixed to get less than 2000 requests per day and with a delay time of 40 per minute.
 
