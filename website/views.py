@@ -11,6 +11,8 @@ import plotly.graph_objects as go
 from plotly.graph_objects import Table
 from .models import DVRPSet, DVRPOrigin
 from . import db
+import openrouteservice
+import os
 
 
 views = Blueprint('views', __name__)
@@ -99,22 +101,24 @@ def plot_table():
 
 @views.route('/map-data')
 def map_data():
-    # Sample data for route plotting
-    df = pd.DataFrame({
-        'Lat': [40.730610, 40.751990],
-        'Lon': [-73.935242, -73.969262],
-        'Order': [1, 2]
-    })
+    # Use os.getenv to get the environment variable value
+    ors_api_key = os.getenv('ORS_API_KEY')
+    client = openrouteservice.Client(key=ors_api_key)
 
-    fig = px.line_mapbox(df, lat='Lat', lon='Lon', line_group='Order', 
+    # Define coordinates of the points (lon, lat)
+    coords = ((-73.935242, 40.730610), (-73.969262, 40.751990))
+
+    # Request route between the points
+    routes = client.directions(coords, profile='driving-car', format='geojson')
+    
+    # Plot the route using Plotly
+    fig = px.line_mapbox(lon=[pt[0] for pt in routes['features'][0]['geometry']['coordinates']],
+                         lat=[pt[1] for pt in routes['features'][0]['geometry']['coordinates']],
                          mapbox_style="open-street-map", zoom=10)
-    
-    # Add scatter plot on the same figure for the points
-    fig.add_trace(px.scatter_mapbox(df, lat='Lat', lon='Lon', size=[1]*len(df)).data[0])
 
+    # Optionally, add the points as markers on top of the route, adjusting the size here
+    fig.add_trace(px.scatter_mapbox(lat=[40.730610, 40.751990], lon=[-73.935242, -73.969262], size_max=15, size=[15]*len([40.730610, 40.751990])).data[0])
     
-    fig.update_layout(
-        margin=dict(l=0, r=0, t=0, b=0)
-    )
+    fig.update_layout(margin=dict(l=0, r=0, t=0, b=0))
 
     return jsonify(fig=fig.to_json())
