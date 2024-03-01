@@ -43,7 +43,7 @@ class ORSDirectionsGeoJSONPost(db.Model):
 
     utc_date = db.Column(db.Integer, primary_key=True, nullable=False)
     utc_from_timestamp = db.Column(db.Text, nullable=False)
-    batch_identifier = db.Column(db.Text, unique=True, nullable=False)
+    dvrp_id = db.Column(db.Text, unique=True, nullable=False)
     data = db.Column(db.Text, nullable=False)
     distance_algorithm = db.Column(db.Numeric, nullable=False)
     distance_pre_load = db.Column(db.Numeric, nullable=False)
@@ -81,6 +81,7 @@ class DVRPSet(db.Model):
     cluster_id = db.Column(db.Integer, nullable=False)
     cluster_name = db.Column(db.Text, nullable=False)
     point = db.Column(db.Text, nullable=False)
+    sequence = db.Column(db.Integer, nullable=True)
 
 class DVRPOrigin(db.Model):
     __tablename__ = 'dvrp_origin'

@@ -109,7 +109,7 @@ def map_data():
     coords = ((-73.935242, 40.730610), (-73.969262, 40.751990))
 
     # Request route between the points
-    routes = client.directions(coords, profile='driving-car', format='geojson')
+    routes = client.directions(coords, profile='driving-hgv', format='geojson')
     
     # Plot the route using Plotly
     fig = px.line_mapbox(lon=[pt[0] for pt in routes['features'][0]['geometry']['coordinates']],
