@@ -16,6 +16,7 @@ output/*.json
 *.csv
 *.db
 *.geojson
+*.json
 *.gpx
 *.kml
 k_means.py
