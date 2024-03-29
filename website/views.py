@@ -1,8 +1,4 @@
 from flask import render_template, request, redirect, url_for, Blueprint, jsonify, flash, session
-from .clustering import ClusteringService
-from .tsp import TspService
-from .load_points import load_points  
-from .vrp import vrp  
 import pandas as pd
 import json
 import plotly
@@ -23,6 +19,7 @@ ALLOWED_EXTENSIONS = set(['csv'])
 def home():
     if request.method =='POST':
         file = request.files['file']
+        origin = request.form.get('origin')
         if file and allowed_file(file.filename):
             try:
                 df = pd.read_csv(file, header=None)
@@ -39,11 +36,12 @@ def home():
                             cluster_id=int(row[1]),
                             cluster_name=row[2],
                             point=row[3],
+                            # sequence=row[4]
                         )
                         db.session.add(dvrp_set)
 
                     dist_v_arr = [x for x in dist_v]
-                    origin_arr = ['DC10' for x in dist_v]
+                    origin_arr = [origin for x in dist_v]
                     for dvrp_id, dvrp_origin in zip(dist_v_arr, origin_arr):
                         dvrp_origin_entry = DVRPOrigin(
                             dvrp_id=dvrp_id,

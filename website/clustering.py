@@ -1,5 +1,7 @@
 import sys
 import pandas as pd
+import numpy as np
+from json import dumps
 from utils import init_db, close_db
 
 
@@ -13,15 +15,13 @@ def process_command_line_arguments(arguments):
     return kwargs
 
 
-def cluster_nearest_node(max_pall, max_lbs, origin, points=None, file_name=None, db_path=None, con=None):
+def cluster_nearest_node(max_pall, max_lbs, origin, points=None, file_name=None, db_path=None, con=None, to_csv=None, set_name=None) -> None:
     if points is None:
         points = pd.read_csv(file_name, header=None)
     
     if db_path is not None and con is None:
         con = init_db(db_path)
 
-    # selected_columns = [1]
-    # selected_columns = 0
     points_chosen = points.iloc[:, 0].values
     flatten_chosen = points_chosen.flatten().astype(str)
     points_chosen_str = ', '.join([f"'{item}'" for item in flatten_chosen])
@@ -31,7 +31,6 @@ def cluster_nearest_node(max_pall, max_lbs, origin, points=None, file_name=None,
     discard = set()
 
     query_str = f"select id_2 from geo_permutations where id_1 = '{origin}' and id_2 in ({points_chosen_str}) order by distance desc"
-    print(query_str)
     cur.execute(query_str)
     perm_rows = [row[0] for row in cur.fetchall()]
 
@@ -64,10 +63,12 @@ def cluster_nearest_node(max_pall, max_lbs, origin, points=None, file_name=None,
             clusters.append(cluster)
 
     print('total clusters = ', len(clusters))
-    print(clusters)
+    print_clusters = dumps(clusters, indent=4)
+    print(print_clusters)
     close_db(con)
 
-    return clusters
+    if to_csv == 'True' and file_name is not None and set_name is not None:
+        cluster_to_csv(clusters, file_name, set_name)
 
 
 def get_geo_point_volume(point_id, cur):
@@ -96,6 +97,23 @@ def get_geo_nearest(point_id, origin, cluster, clusters, cur):
     nearest = row[0] if row else None
 
     return nearest
+
+
+def cluster_to_csv(clusters, file_name, set_name) -> None:
+    rows = []
+    for cluster_id, subarray in enumerate(clusters, start=1):
+        for point in subarray:
+            row = {
+                'dvrp_id': set_name,
+                'cluster_id': cluster_id,
+                'cluster_name': f'Tractor{cluster_id}',
+                'point': point,
+                'sequence': np.nan
+            }
+            rows.append(row)
+    
+    df = pd.DataFrame(rows)
+    df.to_csv(file_name+'clusters.csv', index=False, header=False, na_rep='')
 
 
 functions = {
