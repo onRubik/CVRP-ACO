@@ -31,7 +31,7 @@ def init_db(db_path):
     return con
 
 
-def closeDb(con) -> None:
+def close_db(con) -> None:
     con.close()
 
 
@@ -153,6 +153,7 @@ def geo_points_update(file_name, db_path) -> None:
     ''')
     con.commit()
     print('geo_points table updated')
+    close_db(con)
 
 
 def freq_geo_points(db_path) -> None:
@@ -185,6 +186,7 @@ def freq_geo_points(db_path) -> None:
 
     con.commit()
     print('rows updated = ' + str(rows_count))
+    close_db(con)
 
 
 def pall_lbs_geo_points(db_path) -> None:
@@ -220,6 +222,7 @@ def pall_lbs_geo_points(db_path) -> None:
 
     con.commit()
     print('rows updated = ' + str(rows_count))
+    close_db(con)
 
 
 # saves the permutations from geojson file (pre-downsized)
@@ -313,7 +316,7 @@ def geo_perm_update(file_name, db_path) -> None:
     ''')
     con.commit()
     print('geo_permutations table updated')
-
+    close_db(con)
 
 
 # in a unix/linux like OS set the api key like:
@@ -322,9 +325,11 @@ def geo_perm_update(file_name, db_path) -> None:
 # in a Windows OS set the api key like:
 # $env:ORS_API_KEY = "your api key"
 def get_ors_rate_limit(ORS_API_KEY=None, db_path=None, con=None, cur=None):
+    ad_hoc = False
     if con is None:
         con = init_db(db_path)
         cur = con.cursor()
+        ad_hoc = True
     
     if ORS_API_KEY is None:
         api_key = environ.get(ORS_API_KEY)
@@ -360,6 +365,8 @@ def get_ors_rate_limit(ORS_API_KEY=None, db_path=None, con=None, cur=None):
                 )
             ''', (str(remaining_quota), str(200)))
             con.commit()
+            if ad_hoc is True:
+                    close_db(con)
             
             return remaining_quota
     else:
@@ -372,6 +379,8 @@ def get_ors_rate_limit(ORS_API_KEY=None, db_path=None, con=None, cur=None):
             )
         ''', (str(r.status)))
         con.commit()
+        if ad_hoc is True:
+                close_db(con)
         print('error: ', r.status)
 
 
@@ -428,6 +437,10 @@ def sql_ors_distances(api_var_name, db_path) -> None:
         
         con.commit()
         get_ors_rate_limit(ORS_API_KEY=api_key, db_path=None, con=con, cur=cur)
+        close_db(con)
+    else:
+        print('remaining quota is too low')
+        close_db(con)
 
 
 def ors_fetch_distance(api_key, http, endpoint, coordinates_1, coordinates_2):

@@ -38,7 +38,7 @@ def home():
                             dvrp_id=row[0],
                             cluster_id=int(row[1]),
                             cluster_name=row[2],
-                            point=row[3]
+                            point=row[3],
                         )
                         db.session.add(dvrp_set)
 
