@@ -84,6 +84,7 @@
                 </ul>
             </div>
         </div>
+        <button id="loadPointsBtn" class="btn btn-secondary ml-2" disabled>Load Points</button>
     </div>
 </nav>
 
@@ -100,7 +101,7 @@
               <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
                 {% for dvrp_set in dvrp_sets %}
                 <li>
-                  <a href="#" class="link-body-emphasis d-inline-flex text-decoration-none rounded">
+                  <a href="#" onclick="selectDVRPSet('{{ dvrp_set[0] }}')" class="link-body-emphasis d-inline-flex text-decoration-none rounded">
                     [{{ dvrp_set[0] }}, {{ dvrp_set[1] }}]
                   </a>
                 </li>
