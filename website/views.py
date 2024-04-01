@@ -1,12 +1,12 @@
 from flask import render_template, request, redirect, url_for, Blueprint, jsonify, flash, session
 import pandas as pd
 import json
+from ast import literal_eval
 import plotly
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.graph_objects import Table
 from .models import DVRPSet, DVRPOrigin, GeoPoints, db
-# from . import db
 import openrouteservice
 import os
 
@@ -121,28 +121,35 @@ def map_data():
     ors_api_key = os.getenv('ORS_API_KEY')
     client = openrouteservice.Client(key=ors_api_key)
 
+    origin_node = db.session.query(DVRPOrigin.dvrp_origin)\
+                    .filter(DVRPOrigin.dvrp_id == dvrp_id)\
+                    .first()
+
+    origin_node_coords = db.session.query(GeoPoints.coordinates)\
+                    .filter(GeoPoints.id == origin_node.dvrp_origin)\
+                    .first()
+    
+    origin_node_coords_list = literal_eval(origin_node_coords[0])
+    origin_lon, origin_lat = origin_node_coords_list
+
     if dvrp_id:
-        clusters_points = fetch_clusters_points(dvrp_id)
+        clusters_points, points_query_list = fetch_clusters_points(dvrp_id)
+        print(type(points_query_list))
+        print(points_query_list)
         
-        # Initialize an empty figure with a Mapbox layout
         fig = go.Figure(go.Scattermapbox(
             mode="markers+lines",
-            text=[],  # Empty text list, you can populate it based on your needs
-            marker={'size': 9}))
+            text=[],
+            marker={'size': 15}))
         fig.update_layout(
             mapbox={
                 'style': "open-street-map",
-                'zoom': 10  # Adjust the zoom level according to your preference
+                'zoom': 10,
+                'center': dict(lat=origin_lat, lon=origin_lon),
             },
-            margin={'l': 0, 'r': 0, 't': 0, 'b': 0}
+            margin={'l': 0, 'r': 0, 't': 30, 'b': 0}
         )
-        
-        # Iterate over your cluster points here to add them to the figure
-        # For each cluster, you might need to get the route from OpenRouteService as before,
-        # then plot the route and markers using fig.add_trace() methods.
-        
-        # Example of adding a single route (you should replace this with your actual loop over clusters_points):
-        # This is a placeholder loop. Replace with actual data processing.
+
         for cluster_id, coords in clusters_points.items():
             route = client.directions(coords, profile='driving-hgv', format='geojson')
             line_coords = route['features'][0]['geometry']['coordinates']
@@ -150,71 +157,66 @@ def map_data():
                 lon=[c[0] for c in line_coords],
                 lat=[c[1] for c in line_coords],
                 mode='lines',
-                line=dict(width=4, color='blue'),  # Adjust color dynamically if needed
-                hoverinfo='none'
+                hoverinfo='none',
+                name=f"Cluster {cluster_id}",
             ))
-            # Add markers or other customizations as needed
 
-        # Serialize figure to JSON for response
+        for cluster_id, coords in clusters_points.items():
+            pooint_lon = [coord[0] for coord in coords]
+            pooint_lat = [coord[1] for coord in coords]
+            fig.add_trace(go.Scattermapbox(
+                lon=pooint_lon,
+                lat=pooint_lat,
+                mode='markers',
+                marker={'size': 13, 'color': 'gray'},
+                name=f"Cluster {cluster_id}",
+            ))
+
+        fig.add_trace(go.Scattermapbox(
+            mode='markers',
+            lon=[origin_lon],
+            lat=[origin_lat],
+            marker={'size': 16, 'color': 'red'},
+            name='Origin',
+        ))
+
         return jsonify(fig.to_dict())
 
     return jsonify(error="dvrpId not specified"), 400
 
 
 def fetch_clusters_points(dvrp_id):
-    # Dictionary to hold the clusters and their points
     clusters_points = {}
+    points_query_list = []
 
-    # Query the database for all points associated with the dvrp_id, sorted by cluster_id and sequence
     points_query = db.session.query(DVRPSet.cluster_id, GeoPoints.coordinates)\
                      .join(GeoPoints, DVRPSet.point == GeoPoints.id)\
                      .filter(DVRPSet.dvrp_id == dvrp_id)\
                      .order_by(DVRPSet.cluster_id, DVRPSet.sequence)\
                      .all()
+    
+    origin_node = db.session.query(DVRPOrigin.dvrp_origin)\
+                    .filter(DVRPOrigin.dvrp_id == dvrp_id)\
+                    .first()
 
-    # Origin point, assuming it's associated with each cluster_id but not stored as part of the DVRPSet
-    origin_query = GeoPoints.query.filter_by(id='way/701209222').first()
-    if origin_query:
-        origin_coords = json.loads(origin_query.coordinates)
+    origin_node_coords = db.session.query(GeoPoints.coordinates)\
+                    .filter(GeoPoints.id == origin_node.dvrp_origin)\
+                    .first()
+    
+    if origin_node_coords:
+        origin_coords = json.loads(origin_node_coords.coordinates)
     else:
-        # Handle case where origin is not found
         origin_coords = None
 
-    # Iterate over the query results and populate the clusters_points dictionary
     for cluster_id, coordinates in points_query:
         if cluster_id not in clusters_points:
             clusters_points[cluster_id] = [origin_coords] if origin_coords else []
         
-        # Append the point's coordinates, converting from string to list
         clusters_points[cluster_id].append(json.loads(coordinates))
+        points_query_list.append(json.loads(coordinates))
 
-        # Ensure the origin is also the last point in the route
+    for cluster_id in clusters_points:
         if origin_coords:
             clusters_points[cluster_id].append(origin_coords)
 
-    return clusters_points
-
-
-# @views.route('/map-data')
-# def map_data():
-#     # Use os.getenv to get the environment variable value
-#     ors_api_key = os.getenv('ORS_API_KEY')
-#     client = openrouteservice.Client(key=ors_api_key)
-
-#     # Define coordinates of the points (lon, lat)
-#     coords = ((-73.935242, 40.730610), (-73.969262, 40.751990))
-
-#     # Request route between the points
-#     routes = client.directions(coords, profile='driving-hgv', format='geojson')
-    
-#     # Plot the route using Plotly
-#     fig = px.line_mapbox(lon=[pt[0] for pt in routes['features'][0]['geometry']['coordinates']],
-#                          lat=[pt[1] for pt in routes['features'][0]['geometry']['coordinates']],
-#                          mapbox_style="open-street-map", zoom=10)
-
-#     # Optionally, add the points as markers on top of the route, adjusting the size here
-#     fig.add_trace(px.scatter_mapbox(lat=[40.730610, 40.751990], lon=[-73.935242, -73.969262], size_max=15, size=[15]*len([40.730610, 40.751990])).data[0])
-    
-#     fig.update_layout(margin=dict(l=0, r=0, t=0, b=0))
-
-#     return jsonify(fig=fig.to_json())
+    return clusters_points, points_query_list

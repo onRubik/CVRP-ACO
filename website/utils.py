@@ -352,7 +352,6 @@ def get_ors_rate_limit(ORS_API_KEY=None, db_path=None, con=None, cur=None):
         # data = json.loads(r.data)
         
         if ('x-ratelimit-remaining' in r.headers) and ('x-ratelimit-reset' in r.headers):
-            # reset_limit = int(r.headers['x-ratelimit-reset'])
             remaining_quota = int(r.headers['x-ratelimit-remaining'])
 
             cur.execute('''
