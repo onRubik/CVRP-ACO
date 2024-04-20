@@ -152,7 +152,7 @@ def map_data():
             margin={'l': 0, 'r': 0, 't': 30, 'b': 0}
         )
 
-        for cluster_id, in clusters_points.items():
+        for cluster_id, coords in clusters_points.items():
             route = client.directions(coords, profile='driving-hgv', format='geojson')
             line_coords = route['features'][0]['geometry']['coordinates']
             fig.add_trace(go.Scattermapbox(
