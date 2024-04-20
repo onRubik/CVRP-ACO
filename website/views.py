@@ -133,9 +133,7 @@ def map_data():
     origin_lon, origin_lat = origin_node_coords_list
 
     if dvrp_id:
-        clusters_points, points_query_list = fetch_clusters_points(dvrp_id)
-        # print(type(points_query_list))
-        # print(points_query_list)
+        clusters_points = fetch_clusters_points(dvrp_id)
         print(type(clusters_points))
         print(clusters_points)
         
@@ -153,13 +151,15 @@ def map_data():
         )
 
         for cluster_id, coords in clusters_points.items():
-            route = client.directions(coords, profile='driving-hgv', format='geojson')
+            print('cords = ', coords[0]['coords'])
+            route = client.directions(coords[0]['coords'], profile='driving-hgv', format='geojson')
             line_coords = route['features'][0]['geometry']['coordinates']
             fig.add_trace(go.Scattermapbox(
                 lon=[c[0] for c in line_coords],
                 lat=[c[1] for c in line_coords],
                 mode='lines',
                 hoverinfo='none',
+                line={'width': 4},
                 name=f"Cluster {cluster_id}",
             ))
 
@@ -189,36 +189,35 @@ def map_data():
 
 def fetch_clusters_points(dvrp_id):
     clusters_points = {}
-    points_query_list = []
 
-    points_query = db.session.query(DVRPSet.cluster_id, GeoPoints.coordinates)\
-                     .join(GeoPoints, DVRPSet.point == GeoPoints.id)\
-                     .filter(DVRPSet.dvrp_id == dvrp_id)\
-                     .order_by(DVRPSet.cluster_id, DVRPSet.sequence)\
-                     .all()
-    
-    origin_node = db.session.query(DVRPOrigin.dvrp_origin)\
-                    .filter(DVRPOrigin.dvrp_id == dvrp_id)\
-                    .first()
+    points_query = db.session.query(
+        DVRPSet.cluster_id, DVRPSet.sequence, GeoPoints.coordinates, DVRPSet.point
+    ).join(
+        GeoPoints, DVRPSet.point == GeoPoints.id
+    ).filter(
+        DVRPSet.dvrp_id == dvrp_id
+    ).order_by(
+        DVRPSet.cluster_id, DVRPSet.sequence
+    ).all()
 
-    origin_node_coords = db.session.query(GeoPoints.coordinates)\
-                    .filter(GeoPoints.id == origin_node.dvrp_origin)\
-                    .first()
-    
-    if origin_node_coords:
-        origin_coords = json.loads(origin_node_coords.coordinates)
-    else:
-        origin_coords = None
+    # origin_node = db.session.query(DVRPOrigin.dvrp_origin).filter(DVRPOrigin.dvrp_id == dvrp_id).first()
+    # origin_node_coords = db.session.query(GeoPoints.coordinates).filter(GeoPoints.id == origin_node.dvrp_origin).first()
 
-    for cluster_id, coordinates in points_query:
+    # origin_coords = json.loads(origin_node_coords[0]) if origin_node_coords else None
+    # print(points_query)
+
+    for cluster_id, sequence, coordinates, point_description in points_query:
+        # if cluster_id not in clusters_points:
+        #     clusters_points[cluster_id] = [{'coords': origin_coords, 'desc': 'Origin'}] if origin_coords else []
         if cluster_id not in clusters_points:
-            clusters_points[cluster_id] = [origin_coords] if origin_coords else []
-        
-        clusters_points[cluster_id].append(json.loads(coordinates))
-        points_query_list.append(json.loads(coordinates))
+            # Initialize the list for this cluster_id if it does not already exist
+            clusters_points[cluster_id] = []
 
-    for cluster_id in clusters_points:
-        if origin_coords:
-            clusters_points[cluster_id].append(origin_coords)
+        # print(cluster_id, sequence, coordinates, point_description)
+        clusters_points[cluster_id].append({
+            'coords': json.loads(coordinates),
+            'sequence': sequence,
+            'desc': point_description
+        })
 
-    return clusters_points, points_query_list
+    return clusters_points
