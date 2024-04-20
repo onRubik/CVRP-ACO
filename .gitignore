@@ -21,6 +21,7 @@ output/*.json
 *.kml
 k_means.py
 ortools_test.py
+draft.txt
 
 # Byte-compiled / optimized / DLL files
 website/__pycache__/

@@ -15,6 +15,12 @@ def process_command_line_arguments(arguments):
     return kwargs
 
 
+# file_name represents the input from a csv file, containing a single column (no headers) with the points/nodes a cluster will be made of. Set to_csv=True amd a set_name=set_name_example when calling the function via terminal, to create a csv file output.
+# the csv output file will be like:
+# set_name_example,1,Tractor1,way/639082317,
+# set_name_example,1,Tractor1,way/187680299,
+# set_name_example,1,Tractor1,way/445852457,
+# ..................
 def cluster_nearest_node(max_pall, max_lbs, origin, points=None, file_name=None, db_path=None, con=None, to_csv=None, set_name=None) -> None:
     if points is None:
         points = pd.read_csv(file_name, header=None)

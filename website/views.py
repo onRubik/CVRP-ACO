@@ -134,8 +134,10 @@ def map_data():
 
     if dvrp_id:
         clusters_points, points_query_list = fetch_clusters_points(dvrp_id)
-        print(type(points_query_list))
-        print(points_query_list)
+        # print(type(points_query_list))
+        # print(points_query_list)
+        print(type(clusters_points))
+        print(clusters_points)
         
         fig = go.Figure(go.Scattermapbox(
             mode="markers+lines",
@@ -150,7 +152,7 @@ def map_data():
             margin={'l': 0, 'r': 0, 't': 30, 'b': 0}
         )
 
-        for cluster_id, coords in clusters_points.items():
+        for cluster_id, in clusters_points.items():
             route = client.directions(coords, profile='driving-hgv', format='geojson')
             line_coords = route['features'][0]['geometry']['coordinates']
             fig.add_trace(go.Scattermapbox(
