@@ -1,11 +1,12 @@
-from flask import render_template, request, redirect, url_for, Blueprint, jsonify, flash, session
+from flask import render_template, request, Blueprint, jsonify, flash
+# from flask import redirect, url_for, session
 import pandas as pd
 import json
 from ast import literal_eval
-import plotly
-import plotly.express as px
+# import plotly
+# import plotly.express as px
 import plotly.graph_objects as go
-from plotly.graph_objects import Table
+# from plotly.graph_objects import Table
 from .models import DVRPSet, DVRPOrigin, GeoPoints, db
 import openrouteservice
 import os
@@ -27,7 +28,6 @@ def home():
                 sequence_v = df[4].unique()
                 dist_db_v = db.session.query(DVRPSet.dvrp_id).distinct().all()
                 dist_db_v = [i[0] for i in dist_db_v]
-                print(sequence_v)
                 if (dist_v in dist_db_v) or (pd.isna(sequence_v).any()):
                     if dist_v in dist_db_v:
                         message = 'dvrp_id exists in dvrp_set table'
@@ -134,8 +134,6 @@ def map_data():
 
     if dvrp_id:
         clusters_points = fetch_clusters_points(dvrp_id)
-        print(type(clusters_points))
-        print(clusters_points)
         
         fig = go.Figure(go.Scattermapbox(
             mode="markers+lines",
@@ -144,6 +142,7 @@ def map_data():
         fig.update_layout(
             mapbox={
                 'style': "open-street-map",
+                # 'style': "mapbox://styles/mapbox/streets-v11",  # Using a predefined Mapbox style
                 'zoom': 10,
                 'center': dict(lat=origin_lat, lon=origin_lon),
             },
@@ -151,8 +150,8 @@ def map_data():
         )
 
         for cluster_id, coords in clusters_points.items():
-            print('cords = ', coords[0]['coords'])
-            route = client.directions(coords[0]['coords'], profile='driving-hgv', format='geojson')
+            coords_list = [origin_node_coords_list] + [item['coords'] for item in coords] + [origin_node_coords_list]
+            route = client.directions(coords_list, profile='driving-hgv', format='geojson')
             line_coords = route['features'][0]['geometry']['coordinates']
             fig.add_trace(go.Scattermapbox(
                 lon=[c[0] for c in line_coords],
@@ -163,22 +162,24 @@ def map_data():
                 name=f"Cluster {cluster_id}",
             ))
 
-        for cluster_id, coords in clusters_points.items():
-            pooint_lon = [coord[0] for coord in coords]
-            pooint_lat = [coord[1] for coord in coords]
-            fig.add_trace(go.Scattermapbox(
-                lon=pooint_lon,
-                lat=pooint_lat,
-                mode='markers',
-                marker={'size': 13, 'color': 'gray'},
-                name=f"Cluster {cluster_id}",
-            ))
+            for point in coords:
+                point_text = str(point['sequence']) +' > '+point['desc']
+                fig.add_trace(go.Scattermapbox(
+                    lon=[point['coords'][0]],
+                    lat=[point['coords'][1]],
+                    marker={'size': 16, 'color': 'gray'},
+                    text=[point_text],
+                    mode='markers',
+                    hoverinfo='text',
+                    name=f"Cluster {cluster_id} Point {point['sequence']}",
+                    # legendgroup=f"cluster{cluster_id}",
+                ))
 
         fig.add_trace(go.Scattermapbox(
             mode='markers',
             lon=[origin_lon],
             lat=[origin_lat],
-            marker={'size': 16, 'color': 'red'},
+            marker={'size': 20, 'color': 'red'},
             name='Origin',
         ))
 
@@ -200,20 +201,10 @@ def fetch_clusters_points(dvrp_id):
         DVRPSet.cluster_id, DVRPSet.sequence
     ).all()
 
-    # origin_node = db.session.query(DVRPOrigin.dvrp_origin).filter(DVRPOrigin.dvrp_id == dvrp_id).first()
-    # origin_node_coords = db.session.query(GeoPoints.coordinates).filter(GeoPoints.id == origin_node.dvrp_origin).first()
-
-    # origin_coords = json.loads(origin_node_coords[0]) if origin_node_coords else None
-    # print(points_query)
-
     for cluster_id, sequence, coordinates, point_description in points_query:
-        # if cluster_id not in clusters_points:
-        #     clusters_points[cluster_id] = [{'coords': origin_coords, 'desc': 'Origin'}] if origin_coords else []
         if cluster_id not in clusters_points:
-            # Initialize the list for this cluster_id if it does not already exist
             clusters_points[cluster_id] = []
 
-        # print(cluster_id, sequence, coordinates, point_description)
         clusters_points[cluster_id].append({
             'coords': json.loads(coordinates),
             'sequence': sequence,
