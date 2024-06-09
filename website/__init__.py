@@ -3,7 +3,7 @@ from os import path
 from .models import db
 
 
-DB_NAME = "dvrp.db"
+DB_NAME = "vrp_db.db"
 
 
 def create_app():

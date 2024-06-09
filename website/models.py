@@ -1,6 +1,31 @@
 from flask_sqlalchemy import SQLAlchemy
 
+
 db = SQLAlchemy()
+
+
+class GeoPoints(db.Model):
+    __tablename__ = 'geo_points'
+
+    id_p = db.Column(db.Text, primary_key=True, nullable=False)
+    name = db.Column(db.Text)
+    lat = db.Column(db.Numeric, nullable=False)
+    lon = db.Column(db.Numeric, nullable=False)
+    delivery_freq_per_week = db.Column(db.Numeric)
+    pall_avg = db.Column(db.Integer)
+    lbs_avg = db.Column(db.Numeric)
+
+
+class StageGeoPoints(db.Model):
+    __tablename__ = 'stage_geo_points'
+
+    id_p = db.Column(db.Text, primary_key=True, nullable=False)
+    name = db.Column(db.Text)
+    lat = db.Column(db.Numeric, nullable=False)
+    lon = db.Column(db.Numeric, nullable=False)
+    delivery_freq_per_week = db.Column(db.Numeric)
+    pall_avg = db.Column(db.Integer)
+    lbs_avg = db.Column(db.Numeric)
 
 
 class GeoPermutations(db.Model):
@@ -11,20 +36,25 @@ class GeoPermutations(db.Model):
     id_2 = db.Column(db.Text, nullable=False)
     name_1 = db.Column(db.Text)
     name_2 = db.Column(db.Text)
-    coordinates_1 = db.Column(db.Text, nullable=False)
-    coordinates_2 = db.Column(db.Text, nullable=False)
+    lat_id_1 = db.Column(db.Numeric, nullable=False)
+    lon_id_1 = db.Column(db.Numeric, nullable=False)
+    lat_id_2 = db.Column(db.Numeric, nullable=False)
+    lon_id_2 = db.Column(db.Numeric, nullable=False)
     distance = db.Column(db.Numeric)
 
 
-class GeoPoints(db.Model):
-    __tablename__ = 'geo_points'
+class StageGeoPermutations(db.Model):
+    __tablename__ = 'stage_geo_permutations'
 
-    id = db.Column(db.Text, primary_key=True, nullable=False)
-    name = db.Column(db.Text)
-    coordinates = db.Column(db.Text, nullable=False)
-    delivery_freq_per_week = db.Column(db.Numeric)
-    pall_avg = db.Column(db.Integer)
-    lbs_avg = db.Column(db.Numeric)
+    perm = db.Column(db.Text, primary_key=True, nullable=False)
+    id_1 = db.Column(db.Text, nullable=False)
+    id_2 = db.Column(db.Text, nullable=False)
+    name_1 = db.Column(db.Text)
+    name_2 = db.Column(db.Text)
+    lat_id_1 = db.Column(db.Numeric, nullable=False)
+    lon_id_1 = db.Column(db.Numeric, nullable=False)
+    lat_id_2 = db.Column(db.Numeric, nullable=False)
+    lon_id_2 = db.Column(db.Numeric, nullable=False)
 
 
 class ORSCallLog(db.Model):
@@ -38,45 +68,10 @@ class ORSCallLog(db.Model):
     response_status = db.Column(db.Integer)
 
 
-class ORSDirectionsGeoJSONPost(db.Model):
-    __tablename__ = 'ors_directions_geojson_post'
-
-    utc_date = db.Column(db.Integer, primary_key=True, nullable=False)
-    utc_from_timestamp = db.Column(db.Text, nullable=False)
-    dvrp_id = db.Column(db.Text, unique=True, nullable=False)
-    data = db.Column(db.Text, nullable=False)
-    distance_algorithm = db.Column(db.Numeric, nullable=False)
-    distance_pre_load = db.Column(db.Numeric, nullable=False)
-    distance_after_load = db.Column(db.Numeric)
-
-
-class StageGeoPermutations(db.Model):
-    __tablename__ = 'stage_geo_permutations'
-
-    perm = db.Column(db.Text, primary_key=True, nullable=False)
-    id_1 = db.Column(db.Text, nullable=False)
-    id_2 = db.Column(db.Text, nullable=False)
-    name_1 = db.Column(db.Text)
-    name_2 = db.Column(db.Text)
-    coordinates_1 = db.Column(db.Text, nullable=False)
-    coordinates_2 = db.Column(db.Text, nullable=False)
-
-
-class StageGeoPoints(db.Model):
-    __tablename__ = 'stage_geo_points'
-
-    id = db.Column(db.Text, primary_key=True, nullable=False)
-    name = db.Column(db.Text)
-    coordinates = db.Column(db.Text, nullable=False)
-    delivery_freq_per_week = db.Column(db.Numeric)
-    pall_avg = db.Column(db.Integer)
-    lbs_avg = db.Column(db.Numeric)
-
-
 class DVRPSet(db.Model):
     __tablename__ = 'dvrp_set'
 
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id_set = db.Column(db.Integer, primary_key=True, autoincrement=True)
     dvrp_id = db.Column(db.Text, nullable=False)
     cluster_id = db.Column(db.Integer, nullable=False)
     cluster_name = db.Column(db.Text, nullable=False)
