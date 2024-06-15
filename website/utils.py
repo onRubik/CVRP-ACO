@@ -35,6 +35,8 @@ def close_db(con) -> None:
     con.close()
 
 
+# from raw .geojson data downloaded from overpass-turbo, use resize_geo_points to reduce the bulk data
+# NOTICE: points to be kept are choosen with random.shuffle
 def resize_geo_points(reduced_size, file_name) -> None:
     reduced_size = int(reduced_size)
 
@@ -84,30 +86,28 @@ def geojson_to_csv_and_json(file_name) -> None:
 
     points_csv = []
     points_json = {}
-    index = 1
 
     for point in point_features:
-        id_1 = point['id']
-        name_1 = point['properties'].get('name', '')
-        coordinates_1 = point['geometry']['coordinates']
+        id_p = point['id']
+        name = point['properties'].get('name', '')
+        lat = point['geometry']['coordinates'][1]
+        lon = point['geometry']['coordinates'][0]
         
         points_csv.append({
-            'index': index,
-            'id': id_1,
-            'name': name_1,
-            'coordinates': coordinates_1,
+            'id_p': id_p,
+            'name': name,
+            'lat': lat,
+            'lon': lon
         })
 
-        points_json[index] = {
-            'id': id_1,
-            'name': name_1,
-            'coordinates': coordinates_1,
+        points_json[id_p] = {
+            'name': name,
+            'lat': lat,
+            'lon': lon
         }
 
-        index += 1
-
     with open(file_name+'.csv', 'w', newline='') as csvfile:
-        fieldnames = ['index', 'id', 'name', 'coordinates']
+        fieldnames = ['id_p', 'name', 'lat', 'lon']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(points_csv)
