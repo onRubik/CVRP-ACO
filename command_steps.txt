@@ -1,5 +1,26 @@
+Step #1
+[out:json][timeout:25];
+(
+  node["leisure"="park"](around:50000,40.751990,-73.969262);
+  way["leisure"="park"](around:50000,40.751990,-73.969262);
+  relation["leisure"="park"](around:50000,40.751990,-73.969262);
+);
+out center;
+
 Step #2
 python website/utils.py resize_geo_points reduced_size=20 file_name=export.geojson
 
 Step #3
 python website/utils.py geojson_to_csv_and_json file_name=export.geojson_reduced.geojson
+
+Step #4
+python website/utils.py geo_points_update file_name=export.geojson_reduced.geojson.csv db_path=instance/vrp_db.db
+
+Step #5
+python website/utils.py freq_geo_points db_path=instance/vrp_db.db
+
+Step #6
+python website/utils.py pall_lbs_geo_points db_path=instance/vrp_db.db
+
+Step #7
+python website/utils.py perm_from_geojson file_name=export.geojson_reduced.geojson

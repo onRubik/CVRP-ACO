@@ -1,15 +1,6 @@
 # draft
 website/static/draft.js
 draft_folder/
-src/draft.py
-src/draft2.py
-src/boto3.py
-src/api_test.py
-src/get_points_test.py
-src/osm_data_structure_test.py
-src/geo_data_test.py
-src/geo_perm.py
-src/lambda_functions.py
 input/*.json
 output/*.json
 *.png
@@ -19,8 +10,6 @@ output/*.json
 *.json
 *.gpx
 *.kml
-k_means.py
-ortools_test.py
 draft.txt
 
 # Byte-compiled / optimized / DLL files

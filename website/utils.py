@@ -116,6 +116,7 @@ def geojson_to_csv_and_json(file_name) -> None:
         json.dump(points_json, jsonfile, indent=4)
 
 
+# 
 def geo_points_update(file_name, db_path) -> None:
     con = init_db(db_path)
     cur = con.cursor()
@@ -136,18 +137,17 @@ def geo_points_update(file_name, db_path) -> None:
         con.commit()
         print('stage_geo_points table cleared')
 
-    points = points.drop('index', axis=1)
-    points = points.set_index('id')
-    points.to_sql('stage_geo_points', con, if_exists='append', index_label='id')
+    points = points.set_index('id_p')
+    points.to_sql('stage_geo_points', con, if_exists='append', index_label='id_p')
     con.commit()
     print('stage_geo_points table updated')
 
     cur.execute('''
-        insert into geo_points(id, name, coordinates, delivery_freq_per_week, pall_avg, lbs_avg)
+        insert into geo_points(id_p, name, lat, lon, delivery_freq_per_week, pall_avg, lbs_avg)
         select *
         from stage_geo_points
-        where id not in (
-            select id
+        where id_p not in (
+            select id_p
             from geo_points
         )
     ''')
@@ -156,12 +156,13 @@ def geo_points_update(file_name, db_path) -> None:
     close_db(con)
 
 
+# load delivery frequency to points, where 80% are delivered 1 or 3 times per week
 def freq_geo_points(db_path) -> None:
     con = init_db(db_path)
     cur = con.cursor()
 
     cur.execute('''
-            select id
+            select id_p
             from geo_points
             where delivery_freq_per_week is null
         ''')
@@ -181,7 +182,7 @@ def freq_geo_points(db_path) -> None:
         cur.execute('''
                 update geo_points
                 set delivery_freq_per_week = ?
-                where id = ?     
+                where id_p = ?     
         ''', (delivery_freq_per_week , row[0]))
 
     con.commit()
@@ -189,12 +190,13 @@ def freq_geo_points(db_path) -> None:
     close_db(con)
 
 
+# load pallets and pounds volumes
 def pall_lbs_geo_points(db_path) -> None:
     con = init_db(db_path)
     cur = con.cursor()
 
     cur.execute('''
-            select id
+            select id_p, delivery_freq_per_week
             from geo_points
             where pall_avg is null
             and lbs_avg is null
@@ -208,7 +210,7 @@ def pall_lbs_geo_points(db_path) -> None:
     rows_count = len(rows)
 
     for row in rows:
-        if random.random() <= 0.2:
+        if row[1] > 3:
             pall_avg = random.randint(9, 15)
         else:
             pall_avg = random.randint(1, 8)
@@ -217,7 +219,7 @@ def pall_lbs_geo_points(db_path) -> None:
                 update geo_points
                 set pall_avg = ?,
                     lbs_avg = ?
-                where id = ?     
+                where id_p = ?     
         ''', (pall_avg, lbs_avg, row[0]))
 
     con.commit()
@@ -234,7 +236,6 @@ def perm_from_geojson(file_name) -> None:
 
     perm_csv = []
     perm_json = {}
-    index = 1
 
     for pair in permutations(point_features, 2):
         feature_0, feature_1 = pair
@@ -242,34 +243,36 @@ def perm_from_geojson(file_name) -> None:
         id_2 = feature_1['id']
         name_1 = feature_0['properties'].get('name', '')
         name_2 = feature_1['properties'].get('name', '')
-        coordinates_1 = feature_0['geometry']['coordinates']
-        coordinates_2 = feature_1['geometry']['coordinates']
+        lat_1 = feature_0['geometry']['coordinates'][1]
+        lon_1 = feature_0['geometry']['coordinates'][0]
+        lat_2 = feature_1['geometry']['coordinates'][1]
+        lon_2 = feature_1['geometry']['coordinates'][0]
         
         perm_csv.append({
             'perm': id_1 + id_2,
-            'index': index,
             'id_1': id_1,
             'id_2': id_2,
             'name_1': name_1,
             'name_2': name_2,
-            'coordinates_1': coordinates_1,
-            'coordinates_2': coordinates_2
+            'lat_id_1': lat_1,
+            'lon_id_1': lon_1,
+            'lat_id_2': lat_2,
+            'lon_id_2': lon_2
         })
 
-        perm_json[index] = {
-            'perm': id_1 + id_2,
+        perm_json[id_1 + id_2] = {
             'id_1': id_1,
             'id_2': id_2,
             'name_1': name_1,
             'name_2': name_2,
-            'coordinates_1': coordinates_1,
-            'coordinates_2': coordinates_2
+            'lat_id_1': lat_1,
+            'lon_id_1': lon_1,
+            'lat_id_2': lat_2,
+            'lon_id_2': lon_2
         }
 
-        index += 1
-
     with open(file_name+'_permutations.csv', 'w', newline='') as csvfile:
-        fieldnames = ['index', 'perm', 'id_1', 'id_2', 'name_1', 'name_2', 'coordinates_1', 'coordinates_2']
+        fieldnames = ['perm', 'id_1', 'id_2', 'name_1', 'name_2', 'lat_id_1', 'lon_id_1', 'lat_id_2', 'lon_id_2']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(perm_csv)
