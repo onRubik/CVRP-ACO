@@ -302,14 +302,13 @@ def geo_perm_update(file_name, db_path) -> None:
         con.commit()
         print('stage_geo_permutations table cleared')
 
-    points = points.drop('index', axis=1)
     points = points.set_index('perm')
     points.to_sql('stage_geo_permutations', con, if_exists='append', index_label='perm')
     con.commit()
     print('stage_geo_permutations table updated')
 
     cur.execute('''
-        insert into geo_permutations(perm, id_1, id_2, name_1, name_2, coordinates_1, coordinates_2)
+        insert into geo_permutations(perm, id_1, id_2, name_1, name_2, lat_id_1, lon_id_1, lat_id_2, lon_id_2)
         select *
         from stage_geo_permutations
         where perm not in (
@@ -413,7 +412,7 @@ def sql_ors_distances(api_var_name, db_path) -> None:
             max_get =  min(remaining_quota - 50, missing_distance)
 
         cur.execute('''
-            select perm, coordinates_1, coordinates_2
+            select perm, lat_id_1, lon_id_1, lat_id_2, lon_id_2
             from geo_permutations 
             where distance is null
         ''')
@@ -422,9 +421,9 @@ def sql_ors_distances(api_var_name, db_path) -> None:
         with tqdm.tqdm(total=len(rows)) as pbar:
             counter = 0
             for row in rows:
-                perm, coordinates_1, coordinates_2 = row
-                coordinates_1 = coordinates_1.strip('[]')
-                coordinates_2 = coordinates_2.strip('[]')
+                perm, lat_id_1, lon_id_1, lat_id_2, lon_id_2 = row
+                coordinates_1 = ''.join(str(lon_id_1)+','+str(lat_id_1))
+                coordinates_2 = ''.join(str(lon_id_2)+','+str(lat_id_2))
                 distance = ors_fetch_distance(api_key, http, endpoint, coordinates_1, coordinates_2)
                 if distance is not None:
                     cur.execute('''

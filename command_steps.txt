@@ -24,3 +24,9 @@ python website/utils.py pall_lbs_geo_points db_path=instance/vrp_db.db
 
 Step #7
 python website/utils.py perm_from_geojson file_name=export.geojson_reduced.geojson
+
+Step #8
+python website/utils.py geo_perm_update file_name=export.geojson_reduced.geojson_permutations.csv db_path=instance/vrp_db.db
+
+Step #9
+python website/utils.py sql_ors_distances api_var_name=ORS_API_KEY db_path=instance/vrp_db.db
