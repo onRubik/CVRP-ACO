@@ -30,3 +30,6 @@ python website/utils.py geo_perm_update file_name=export.geojson_reduced.geojson
 
 Step #9
 python website/utils.py sql_ors_distances api_var_name=ORS_API_KEY db_path=instance/vrp_db.db
+
+Step #10 run ACO
+python website/vrp.py run_aco input_path=input.csv db_path=instance/vrp_db.db origin=way/981858308 n_ants=10 n_best=5 n_iterations=100 decay=0.95 max_pallets=22 max_weight=38000 alpha=1 beta=2
