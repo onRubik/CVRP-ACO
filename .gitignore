@@ -10,6 +10,7 @@ output/*.json
 *.json
 *.gpx
 *.kml
+*.sh
 draft.txt
 
 # Byte-compiled / optimized / DLL files
