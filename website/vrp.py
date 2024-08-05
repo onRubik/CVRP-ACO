@@ -5,6 +5,7 @@ import random
 import sys
 import csv
 import matplotlib.pyplot as plt
+from tqdm import trange
 
 
 def process_command_line_arguments(arguments):
@@ -61,7 +62,13 @@ class AntColonyOptimization:
         return points_df, distances_df
 
     def prepare_data(self, points_df, distances_df):
-        self.points = points_df[['id_p', 'pall_avg', 'lbs_avg']].values
+        self.desc_points = points_df[['id_p', 'pall_avg', 'lbs_avg']].values
+        # print('desc_points:', self.desc_points)
+        self.points = self.desc_points.copy()
+        self.points[:,0] = np.arange(self.points.shape[0])
+        # print('points:', self.points)
+        self.origin_index = np.where(self.desc_points[:,0] == str(self.origin))[0][0]
+        # print('origin_index:', self.origin_index)
         self.distances = distances_df.pivot(index='id_1', columns='id_2', values='distance').values
         self.coordinates = points_df[['lon', 'lat']].values  # Assuming 'x' and 'y' columns for coordinates
         self.pheromone = np.ones(self.distances.shape) / len(self.points)
@@ -73,8 +80,9 @@ class AntColonyOptimization:
 
         shortest_paths = []
         all_time_shortest_path = ("placeholder", np.inf)
-        for i in range(self.n_iterations):
+        for i in trange(self.n_iterations):
             all_paths = self.gen_all_paths()
+            print(all_paths)
             self.spread_pheromone(all_paths, self.n_best, shortest_paths)
             shortest_path = min(all_paths, key=lambda x: x[1])
             if shortest_path[1] < all_time_shortest_path[1]:
@@ -103,7 +111,7 @@ class AntColonyOptimization:
     def gen_all_paths(self):
         all_paths = []
         for i in range(self.n_ants):
-            paths = self.gen_paths(self.origin)
+            paths = self.gen_paths(self.origin_index)
             for path in paths:
                 all_paths.append((path, self.gen_path_dist(path)))
         return all_paths
@@ -126,8 +134,6 @@ class AntColonyOptimization:
                 current_weight = 0
                 prev = start
             
-            print('prev:')
-            print(prev)
             move = self.pick_move(self.pheromone[prev], self.distances[prev], visited)
             if move is None:
                 break
@@ -150,9 +156,11 @@ class AntColonyOptimization:
         pheromone[list(visited)] = 0
 
         row = pheromone ** self.alpha * ((1.0 / dist) ** self.beta)
-        norm_row = row / row.sum()
+        # norm_row = row / row.sum()
+        norm_row = row / np.nansum(row)
         if norm_row.sum() == 0:
             return None
+        norm_row = np.nan_to_num(norm_row, nan=0.0)
         move = np_choice(self.all_inds, 1, p=norm_row)[0]
         return move
 
