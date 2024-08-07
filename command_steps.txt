@@ -31,5 +31,7 @@ python website/utils.py geo_perm_update file_name=export.geojson_reduced.geojson
 Step #9
 python website/utils.py sql_ors_distances api_var_name=ORS_API_KEY db_path=instance/vrp_db.db
 
+# ant_colony_optimization(in_file='input.csv', db_path='instance/vrp_db.db', origin='way/1180028681', max_pall=None, max_lbs=None, n_ants=10, n_iterations=100, alpha=1, beta=1, evaporation_rate=0.5, Q=1)
 Step #10 run ACO
 python website/vrp.py run_aco input_path=input.csv db_path=instance/vrp_db.db origin=way/981858308 n_ants=10 n_best=5 n_iterations=100 decay=0.5 max_pallets=22 max_weight=38000 alpha=1 beta=1
+python website/vrp_draft.py run_aco in_file=input.csv db_path=instance/vrp_db.db origin=way/1180028681 max_pall=22 max_lbs=38000 n_ants=20 n_iterations=30 alpha=1 beta=1 evaporation_rate=0.5 Q=1
