@@ -71,12 +71,17 @@ class ORSCallLog(db.Model):
 class DVRPSet(db.Model):
     __tablename__ = 'dvrp_set'
 
-    id_set = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id_set = db.Column(db.Integer, nullable=False)
     dvrp_id = db.Column(db.Text, nullable=False)
     cluster_id = db.Column(db.Integer, nullable=False)
     cluster_name = db.Column(db.Text, nullable=False)
     point = db.Column(db.Text, nullable=False)
     sequence = db.Column(db.Integer, nullable=True)
+
+    __table_args__ = (
+        db.PrimaryKeyConstraint('id_set', 'dvrp_id'),
+    )
+
 
 class DVRPOrigin(db.Model):
     __tablename__ = 'dvrp_origin'

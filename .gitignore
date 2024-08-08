@@ -12,6 +12,7 @@ output/*.json
 *.kml
 *.sh
 draft.txt
+origin_vrp.py
 
 # Byte-compiled / optimized / DLL files
 website/__pycache__/
