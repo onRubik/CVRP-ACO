@@ -1,12 +1,8 @@
-from flask import render_template, request, Blueprint, jsonify, flash
-# from flask import redirect, url_for, session
+from flask import render_template, request, Blueprint, jsonify, flash, has_request_context
 import pandas as pd
 import json
 from ast import literal_eval
-# import plotly
-# import plotly.express as px
 import plotly.graph_objects as go
-# from plotly.graph_objects import Table
 from .models import DVRPSet, DVRPOrigin, GeoPoints, db
 import openrouteservice
 import os
@@ -79,7 +75,9 @@ def plot_table():
     dvrp_id = request.args.get('dvrpId')
     if dvrp_id is not None:
         # If a specific DVRP ID is provided, filter the query
+        # dvrp_set_query = DVRPSet.query.filter_by(dvrp_id=dvrp_id, id_set=id_set)
         dvrp_set_query = DVRPSet.query.filter_by(dvrp_id=dvrp_id)
+        # dvrp_set_query = DVRPSet.query
     else:
         # Otherwise, fetch all records
         dvrp_set_query = DVRPSet.query
@@ -89,10 +87,10 @@ def plot_table():
         {column.name: getattr(row, column.name) for column in row.__table__.columns}
         for row in dvrp_set_all
     ]
-    dvrp_set_all_data = [
-        {column.name: getattr(row, column.name) for column in row.__table__.columns} 
-        for row in dvrp_set_all
-    ]
+    # dvrp_set_all_data = [
+    #     {column.name: getattr(row, column.name) for column in row.__table__.columns} 
+    #     for row in dvrp_set_all
+    # ]
     df_dvrp_set_all = pd.DataFrame(dvrp_set_all_data)
 
     fig_dvrp_set_all = go.Figure(data=[go.Table(
@@ -125,19 +123,11 @@ def map_data():
                     .filter(DVRPOrigin.dvrp_id == dvrp_id)\
                     .first()
 
-    # origin_node_coords = db.session.query(GeoPoints.coordinates)\
-    #                 .filter(GeoPoints.id == origin_node.dvrp_origin)\
-    #                 .first()
-    
-    # origin_node_coords_list = literal_eval(origin_node_coords[0])
-    # origin_lon, origin_lat = origin_node_coords_list
-
     origin_node_coords = db.session.query(GeoPoints.lat, GeoPoints.lon)\
                     .filter(GeoPoints.id_p == origin_node.dvrp_origin)\
                     .first()
 
     origin_lat, origin_lon = origin_node_coords
-    # origin_node_coords_list = f"[{origin_lon}, {origin_lat}]"
     origin_node_coords_list = [float(origin_lon), float(origin_lat)]
 
     if dvrp_id:
@@ -159,7 +149,6 @@ def map_data():
 
         for cluster_id, coords in clusters_points.items():
             coords_list = [origin_node_coords_list] + [item['coords'] for item in coords] + [origin_node_coords_list]
-            print(coords_list)
             route = client.directions(coords_list, profile='driving-hgv', format='geojson')
             line_coords = route['features'][0]['geometry']['coordinates']
             fig.add_trace(go.Scattermapbox(
