@@ -38,50 +38,22 @@ class aco:
 
 
     def load_best_path_id_p(self):
-        points_query = (
-            '''
-            select max(id_set)
-            from dvrp_set
-            ;
-            '''
-        )
-
-        # max_id_set = pd.read_sql_query(points_query, self.con)
-        # if max_id_set.iloc[0, 0] == None:
-        #     max_val = 0
-        # else:
-        #     max_val = int.from_bytes(max_id_set.iloc[0, 0], 'little') + 1
-
+        if self.best_path_id_p == self.origin:
+            self.best_path_id_p.pop()
+        
         cluster_l = []
         cluster_counter = 0
-        status = False
         sequence_n = 0
         for item in self.best_path_id_p:
-            if status == False:
-                sequence_n = 0
-            if item == self.origin and status == False:
-                # cluster_l.append([max_val, self.dvrp_id, cluster_counter, 'tractor_' + str(cluster_counter), item, sequence_n])
-                cluster_l.append([self.dvrp_id, cluster_counter, 'tractor_' + str(cluster_counter), item, sequence_n])
-                sequence_n += 1
-                status = True
-            elif item != self.origin and status == True:
-                # cluster_l.append([max_val, self.dvrp_id, cluster_counter, 'tractor_' + str(cluster_counter), item, sequence_n])
-                cluster_l.append([self.dvrp_id, cluster_counter, 'tractor_' + str(cluster_counter), item, sequence_n])
-                sequence_n += 1
-            elif item != self.origin and status == False:
-                status = True
-                # cluster_l.append([max_val, self.dvrp_id, cluster_counter, 'tractor_' + str(cluster_counter), item, sequence_n])
-                cluster_l.append([self.dvrp_id, cluster_counter, 'tractor_' + str(cluster_counter), item, sequence_n])
-                sequence_n += 1
-            elif item == self.origin and status == True:
-                status = False
-                # cluster_l.append([max_val, self.dvrp_id, cluster_counter, 'tractor_' + str(cluster_counter), item, sequence_n])
-                cluster_l.append([self.dvrp_id, cluster_counter, 'tractor_' + str(cluster_counter), item, sequence_n])
+            if item == self.origin:
                 cluster_counter += 1
+                sequence_n = 1
+            else:
+                cluster_l.append([self.dvrp_id, cluster_counter, 'Tractor_'+str(cluster_counter), item, sequence_n])
+                sequence_n += 1
             
         cluster_l = [x for x in cluster_l if x[3] != self.origin]
 
-        # self.cur.executemany('insert into dvrp_set (id_set, dvrp_id, cluster_id, cluster_name, point, sequence) values (?, ?, ?, ?, ?, ?)', cluster_l)
         self.cur.executemany('insert into dvrp_set (dvrp_id, cluster_id, cluster_name, point, sequence) values (?, ?, ?, ?, ?)', cluster_l)
         self.cur.execute('insert into dvrp_origin (dvrp_id, dvrp_origin) values (?, ?)', [self.dvrp_id, self.origin])
         self.con.commit()

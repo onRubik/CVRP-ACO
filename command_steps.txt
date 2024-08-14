@@ -32,4 +32,4 @@ Step #9
 python website/utils.py sql_ors_distances api_var_name=ORS_API_KEY db_path=instance/vrp_db.db
 
 Step #10 run ACO
-python website/cdvrp.py run_aco dvrp_id=test_1 in_file=input.csv db_path=instance/vrp_db.db origin=way/1180028681 max_pall=22 max_lbs=38000 n_ants=20 n_iterations=50 alpha=1 beta=1 evaporation_rate=0.5 Q=1
+python website/cdvrp.py run_aco dvrp_id=test_3 in_file=input.csv db_path=instance/vrp_db.db origin=way/1180028681 max_pall=22 max_lbs=38000 n_ants=30 n_iterations=150 alpha=1 beta=1 evaporation_rate=0.5 Q=1
