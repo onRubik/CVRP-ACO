@@ -1,25 +1,21 @@
 # draft
-src/draft.py
-src/draft2.py
-src/boto3.py
-src/api_test.py
-src/get_points_test.py
-src/osm_data_structure_test.py
-src/geo_data_test.py
-src/geo_perm.py
-src/lambda_functions.py
+website/static/draft.js
+draft_folder/
 input/*.json
 output/*.json
 *.png
 *.csv
 *.db
 *.geojson
+*.json
 *.gpx
 *.kml
-k_means.py
-ortools_test.py
+*.sh
+draft.txt
+origin_vrp.py
 
 # Byte-compiled / optimized / DLL files
+website/__pycache__/
 __pycache__/
 *.py[cod]
 *$py.class

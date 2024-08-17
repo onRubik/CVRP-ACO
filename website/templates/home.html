@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block additional_head %}
+<style>
+    .navbar-nav .nav-link#logout {
+        padding-right: 20px;
+        padding-left: 20px;
+    }
+    .btn-toggle {
+        padding: .25rem .5rem;
+        font-weight: 600;
+        color: var(--bs-emphasis-color);
+        background-color: transparent;
+    }
+    .btn-toggle:hover,
+    .btn-toggle:focus {
+        color: rgba(var(--bs-emphasis-color-rgb), .85);
+        background-color: var(--bs-tertiary-bg);
+    }
+    .btn-toggle::before {
+        width: 1.25em;
+        line-height: 0;
+        content: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='rgba%280,0,0,.5%29' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M5 14l6-6-6-6'/%3e%3c/svg%3e");
+        transition: transform .35s ease;
+        transform-origin: .5em 50%;
+    }
+    [data-bs-theme="dark"] .btn-toggle::before {
+        content: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='rgba%28255,255,255,.5%29' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M5 14l6-6-6-6'/%3e%3c/svg%3e");
+    }
+    .btn-toggle[aria-expanded="true"] {
+        color: rgba(var(--bs-emphasis-color-rgb), .85);
+    }
+    .btn-toggle[aria-expanded="true"]::before {
+        transform: rotate(90deg);
+    }
+    .btn-toggle-nav a {
+        padding: .1875rem .5rem;
+        margin-top: .125rem;
+        margin-left: 1.25rem;
+    }
+    .btn-toggle-nav a:hover,
+    .btn-toggle-nav a:focus {
+        background-color: var(--bs-tertiary-bg);
+    }
+    .plotly-table-container {
+        display: flex;
+        justify-content: left;
+        padding: 2px;
+    }
+      #plotly-table {
+        flex-grow: 1;
+        width: 100%;
+        min-height: 300px;
+    }
+    #plotly-map-container {
+        height: 700px;
+        width: 100%;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<nav class="navbar navbar-expand-lg">
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbar">
+        <div class="navbar-nav">
+            <div class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="fileMenu" role="button" data-bs-toggle="dropdown">
+                    File
+                </a>
+                <ul class="dropdown-menu" aria-labelledby="fileMenu">
+                    <li>
+                      <form method="POST" action="/" enctype="multipart/form-data">
+                        <a>New DVRP set</a>
+                        <input type="file" name="file">
+                        Origin: <input type="text" name="origin" placeholder="Enter Origin"><br>
+                        <button id="liveAlertBtn">Submit</button>
+                      </form>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <button id="loadPointsBtn" class="btn btn-secondary ml-2" disabled>Load Points</button>
+    </div>
+</nav>
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-auto">
+      <div class="flex-shrink-0 p-2" style="width: 200px;">
+        <ul class="list-unstyled ps-0">
+          <li class="mb-1">
+            <button class="btn btn-toggle d-inline-flex align-items-center rounded border-0 collapsed" data-bs-toggle="collapse" data-bs-target="#home-collapse" aria-expanded="false">
+              DVRP sets
+            </button>
+            <div class="collapse" id="home-collapse">
+              <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+                {% for dvrp_set in dvrp_sets %}
+                <li>
+                  <a href="#" onclick="selectDVRPSet('{{ dvrp_set[0] }}')" class="link-body-emphasis d-inline-flex text-decoration-none rounded">
+                    [{{ dvrp_set[0] }}, {{ dvrp_set[1] }}]
+                  </a>
+                </li>
+                {% endfor %}
+              </ul>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="col-md-9">
+      <div id="plotly-map-container">
+        {{ map_html|safe }}
+      </div>
+      <div class="plotly-table-container">
+        <div id="plotly-table" style="height: 100%;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

@@ -2,3 +2,8 @@ numpy==1.25.2
 pandas==1.5.3
 matplotlib==3.7.1
 tqdm==4.66.3
+flask==3.0.0
+Flask-SQLAlchemy==3.1.1
+plotly==5.18.0
+openrouteservice==2.3.3
+tqdm==4.66.3
