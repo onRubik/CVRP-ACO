@@ -74,12 +74,8 @@ def allowed_file(filename):
 def plot_table():
     dvrp_id = request.args.get('dvrpId')
     if dvrp_id is not None:
-        # If a specific DVRP ID is provided, filter the query
-        # dvrp_set_query = DVRPSet.query.filter_by(dvrp_id=dvrp_id, id_set=id_set)
         dvrp_set_query = DVRPSet.query.filter_by(dvrp_id=dvrp_id)
-        # dvrp_set_query = DVRPSet.query
     else:
-        # Otherwise, fetch all records
         dvrp_set_query = DVRPSet.query
 
     dvrp_set_all = dvrp_set_query.all()
@@ -87,10 +83,6 @@ def plot_table():
         {column.name: getattr(row, column.name) for column in row.__table__.columns}
         for row in dvrp_set_all
     ]
-    # dvrp_set_all_data = [
-    #     {column.name: getattr(row, column.name) for column in row.__table__.columns} 
-    #     for row in dvrp_set_all
-    # ]
     df_dvrp_set_all = pd.DataFrame(dvrp_set_all_data)
 
     fig_dvrp_set_all = go.Figure(data=[go.Table(
@@ -140,7 +132,6 @@ def map_data():
         fig.update_layout(
             mapbox={
                 'style': "open-street-map",
-                # 'style': "mapbox://styles/mapbox/streets-v11",  # Using a predefined Mapbox style
                 'zoom': 10,
                 'center': dict(lat=origin_lat, lon=origin_lon),
             },
@@ -170,7 +161,6 @@ def map_data():
                     mode='markers',
                     hoverinfo='text',
                     name=f"Cluster {cluster_id} Point {point['sequence']}",
-                    # legendgroup=f"cluster{cluster_id}",
                 ))
 
         fig.add_trace(go.Scattermapbox(

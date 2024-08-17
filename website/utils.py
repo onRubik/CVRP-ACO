@@ -11,10 +11,6 @@ from os import environ
 import urllib3
 
 
-# When using a Unix/linux OS or linux linke terminal the path for argument "file_name" needs to be as "file_name=~/<complete_path_of_parent_folder>/<your_file_name>"
-# When using a Windows OS or Windows linke terminal the path for argument "file_name" needs to be as "file_name=C:\<complete_path_of_parent_folder>\<your_file_name>"
-
-
 def process_command_line_arguments(arguments):
     kwargs = {}
     for argument in arguments:
@@ -77,7 +73,6 @@ def count_geo_keys(file_name) -> None:
     print('Number of unique IDs = ', distinct_id_count)
 
 
-# converts geojson files (pre-resized) into filered json and csv files
 def geojson_to_csv_and_json(file_name) -> None:
     with open(file_name, 'r') as geojson_file:
         geojson_data = json.load(geojson_file)
@@ -116,7 +111,6 @@ def geojson_to_csv_and_json(file_name) -> None:
         json.dump(points_json, jsonfile, indent=4)
 
 
-# 
 def geo_points_update(file_name, db_path) -> None:
     con = init_db(db_path)
     cur = con.cursor()
@@ -156,7 +150,6 @@ def geo_points_update(file_name, db_path) -> None:
     close_db(con)
 
 
-# load delivery frequency to points, where 80% are delivered 1 or 3 times per week
 def freq_geo_points(db_path) -> None:
     con = init_db(db_path)
     cur = con.cursor()
@@ -190,7 +183,6 @@ def freq_geo_points(db_path) -> None:
     close_db(con)
 
 
-# load pallets and pounds volumes
 def pall_lbs_geo_points(db_path) -> None:
     con = init_db(db_path)
     cur = con.cursor()
@@ -227,7 +219,6 @@ def pall_lbs_geo_points(db_path) -> None:
     close_db(con)
 
 
-# saves the permutations from geojson file (pre-downsized)
 def perm_from_geojson(file_name) -> None:
     with open(file_name, 'r') as geojson_file:
         geojson_data = json.load(geojson_file)
@@ -281,7 +272,6 @@ def perm_from_geojson(file_name) -> None:
         json.dump(perm_json, jsonfile, indent=4)
 
 
-# updates DB with permutations csv file (pre-downsized)
 def geo_perm_update(file_name, db_path) -> None:
     con = init_db(db_path)
     cur = con.cursor()
