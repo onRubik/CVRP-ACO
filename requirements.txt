@@ -6,3 +6,4 @@ flask==3.0.0
 Flask-SQLAlchemy==3.1.1
 plotly==5.18.0
 openrouteservice==2.3.3
+tqdm==4.66.3
