@@ -55,6 +55,7 @@ def home():
                     message = 'set added to dvrp_set table'
                     flash(message, category='success')
             except Exception as e:
+                print(e)
                 db.session.rollback()
 
     dvrp_sets = db.session.query(
