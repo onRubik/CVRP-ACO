@@ -1,9 +1,13 @@
-numpy==1.25.2
-pandas==1.5.3
-matplotlib==3.7.1
-tqdm==4.66.3
-flask==3.0.0
-Flask-SQLAlchemy==3.1.1
-plotly==5.18.0
-openrouteservice==2.3.3
-tqdm==4.66.3
+# Build dependencies
+setuptools>=65.0.0
+wheel>=0.37.0
+
+# Core packages - updated for Python 3.12 compatibility
+numpy>=1.26.0
+pandas>=2.0.0
+matplotlib>=3.8.0
+tqdm>=4.66.0
+flask>=3.0.0
+Flask-SQLAlchemy>=3.1.0
+plotly>=5.18.0
+openrouteservice>=2.3.0

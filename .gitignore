@@ -1,3 +1,7 @@
+# IDE and editor settings
+.vscode/
+.kiro/
+
 # draft
 website/static/draft.js
 draft_folder/
